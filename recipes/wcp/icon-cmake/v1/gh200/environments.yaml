@@ -14,14 +14,30 @@ nvidia:
   #- eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
   - cmake%gcc
   - cuda@12.3%gcc
-  - hdf5%nvhpc +fortran
+  - hdf5%nvhpc +fortran +hl
   - hwloc%gcc
   - netcdf-c%gcc
-  - netcdf-cxx4%gcc
-  - netcdf-fortran%nvhpc
   - numactl%gcc
   - osu-micro-benchmarks@5.9%nvhpc
   - perl%gcc
+
+  - ^boost@1.84.0%gcc@12.3.0+multithreaded
+  - ^claw@2.1%gcc@12.3.0~ipo    
+  - ^eccodes@2.34.0%gcc@12.3.0+aec+fortran~ipo~memfs~netcdf~openmp~png~pthreads+shared~tools   extra_definitions=none  jp2k=openjpeg 
+  - ^libcdi-pio@master%gcc@12.3.0~external-grib1+fortran+mpi+netcdf+shared~szip-grib1+threads  grib2=eccodes 
+  - ^libfyaml@0.8%gcc@12.3.0  
+  - ^libxml2@2.10.3%gcc@12.3.0+pic~python+shared  
+  - ^mtime@master%gcc@12.3.0  
+  - ^netcdf-c@4.9.2%gcc@12.3.0+blosc~byterange~dap~fsync~hdf4~jna+mpi~nczarr_zip+optimize~parallel-netcdf+pic+shared+szip+zstd   
+  - ^netcdf-fortran@4.6.1%gcc@12.3.0~doc+pic+shared  
+  - ^perl@5.38.0%gcc@12.3.0+cpanm+opcode+open+shared+threads   
+  - ^py-gridtools-cpp@2.3.2%gcc@12.3.0  
+  - ^py-gt4py@main
+  - ^py-icon4py@main%gcc@12.3.0  
+  - ^rte-rrtmgp@autoconf%gcc@12.3.0  
+  - ^serialbox@2.6.1%gcc@12.3.0+async-api+c~examples+fortran~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem     
+  - ^yaxt@0.9.3.1%gcc@12.3.0+fortran+shared  
+ 
   # The following are required to stop spack from using nvhpc to build
   # basic dependencies, some of which don't compile with nvc etc.
   # Explicitly excluded as modules.
@@ -48,6 +64,7 @@ nvidia:
   - cuda_arch=90
   - +mpi
   - +cuda
+  - +fortran
   packages:
   - curl
   - gmake
