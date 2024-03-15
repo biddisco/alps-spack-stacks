@@ -11,14 +11,14 @@ nvidia:
   specs:
   - boost%gcc ~mpi
   - python@3.10%gcc
-  #- eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
+  - eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
   - cmake%gcc
   - cuda@12.3%gcc
 
   # compile all fortran enabled packages using nvhpc
   - hdf5%nvhpc +fortran +hl
   - libcatalyst%nvhpc +mpi +fortran +python
-  - eccodes@2.34.0%nvhpc +aec+fortran~ipo~memfs~netcdf~openmp~png~pthreads+shared~tools   extra_definitions=none  jp2k=openjpeg 
+    #- eccodes@2.34.0%nvhpc +aec+fortran~ipo~memfs~netcdf~openmp~png~pthreads+shared~tools   extra_definitions=none  jp2k=jasper
   - libcdi-pio@master%nvhpc ~external-grib1+fortran+mpi+netcdf+shared~szip-grib1+threads  grib2=eccodes 
   - netcdf-fortran@4.6.1%nvhpc ~doc+pic+shared  
   - serialbox@2.6.1%nvhpc +async-api+c~examples+fortran~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem     
@@ -27,7 +27,6 @@ nvidia:
   - hwloc%gcc
   - netcdf-c%gcc 
   - numactl%gcc
-    #  - osu-micro-benchmarks@5.9%nvhpc
   - perl%gcc
 
   - boost@1.84.0%gcc@12.3.0+multithreaded
