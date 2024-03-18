@@ -18,7 +18,7 @@ nvidia:
   # compile all fortran enabled packages using nvhpc
   - hdf5%nvhpc                  +fortran +hl
   - libcatalyst%nvhpc +mpi      +fortran +python
-  - eccodes@2.34.0%nvhpc        +fortran +aec +tools +openmp +shared jp2k=jasper
+  #- eccodes@2.34.0%nvhpc        +fortran +aec +tools +openmp +shared jp2k=jasper
   - libcdi-pio@master%nvhpc     +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes 
   - netcdf-fortran@4.6.1%nvhpc  ~doc+pic +shared  
   - serialbox@2.6.1%nvhpc       +fortran +async-api+c~examples~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem     
@@ -111,7 +111,7 @@ nvidia:
   - seacas%gcc
   - utf8cpp%gcc
   # python
-  - python@3.11%gcc
+  #- python@3.11%gcc
   - py-pandas%gcc
   - py-matplotlib%gcc
   - py-mpi4py%gcc
