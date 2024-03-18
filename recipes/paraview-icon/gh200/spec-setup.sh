@@ -1,0 +1,2 @@
+spack spec --no-install-status "icon@develop %gcc +mpi +cuda cuda_arch=none +yaxt +waves serialization=create +rte-rrtmgp +les +jsbach gpu=openacc+cuda +emvorado +edmf +ecrad dsl=fused +dace +aes +art +async-io-rma +atmo +cdi-pio claw=std +coupling dev_path=/home/biddisco/src/icon-exclaim ^python@3.10 ^py-gridtools-cpp@2.3.2 ^py-icon4py@main ^py-gt4py@main" | grep "@" | grep -v "^        " | sed 's/arch=[^ ]*//' | sed 's/build_system=[^ ]*//' | sed 's/build_type=[^ ]*//' | sed 's/generator=[^ ]*//' | sed 's/patches=[^ ]*//' | sed 's/^ */  - /g' | sort 
+
