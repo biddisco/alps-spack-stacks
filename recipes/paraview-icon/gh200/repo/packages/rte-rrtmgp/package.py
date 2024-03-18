@@ -11,8 +11,8 @@ class RteRrtmgp(AutotoolsPackage):
 
     homepage = "https://github.com/earth-system-radiation/rte-rrtmgp"
     url = "https://github.com/earth-system-radiation/rte-rrtmgp/wiki"
-    # "home/biddisco/src/icon-exclaim/externals/rte-rrtmgp"
-    git = "https://github.com/earth-system-radiation/rte-rrtmgp.git"
+    git = "/home/biddisco/src/icon-exclaim/externals/rte-rrtmgp"
+    #git = "https://github.com/earth-system-radiation/rte-rrtmgp.git"
     maintainers = ["biddisco"]
 
     license("BSD-3-Clause")
