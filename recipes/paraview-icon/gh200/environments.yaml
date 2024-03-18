@@ -94,7 +94,8 @@ nvidia:
   - googletest%gcc
   # in-situ support
   # - libcatalyst +mpi
-  # vtk external deps 
+  # vtk external deps
+  - openjpeg%gcc 
   - cgns@4.4.0%gcc
   - double-conversion@3.3.0%gcc
   - gl2ps%gcc
