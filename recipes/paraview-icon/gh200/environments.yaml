@@ -11,7 +11,7 @@ nvidia:
   specs:
   #- boost%gcc ~mpi
   - python@3.10%gcc
-    #- eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
+  - eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
   - cmake@3.27.9%gcc
   - cuda@12.3%gcc
 
