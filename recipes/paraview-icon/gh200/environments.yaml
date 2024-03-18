@@ -9,7 +9,7 @@ nvidia:
       spec: cray-mpich@8.1.29
       gpu: cuda
   specs:
-  - boost%gcc ~mpi
+  #- boost%gcc ~mpi
   - python@3.10%gcc
     #- eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
   - cmake@3.27.9%gcc
@@ -77,8 +77,8 @@ nvidia:
   - openblas%gcc
   - proj%gcc
   # c++ helperrs
-  - fmt%gcc
-  - stdexec@main%gcc
+  #- fmt%gcc
+  #- stdexec@main%gcc
   - boost%gcc +atomic +chrono +container +context +coroutine +date_time +filesystem +graph +json +mpi +multithreaded +program_options +regex +serialization +shared +system +test +thread
   # IO and parallelism
   - h5hut@master
