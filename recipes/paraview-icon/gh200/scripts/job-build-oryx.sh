@@ -12,7 +12,7 @@ export PYTHONUNBUFFERED=1
 
 CLUSTER=oryx
 STACKI_DIR=$SRC/alps-vcluster/stackinator
-RECIPE_DIR=$SRC/alps-vcluster/alps-spack-stacks/recipes/wcp/icon-cmake/v1/gh200
+RECIPE_DIR=$SRC/alps-vcluster/alps-spack-stacks/recipes/paraview-icon/gh200
 SYSTEM_DIR=$SRC/alps-vcluster/alps-cluster-config/$CLUSTER
 BUILD_DIR=/dev/shm/biddisco
 MOUNT=/user-environment
