@@ -1,0 +1,51 @@
+diff --git a/Makefile.am b/Makefile.am
+index 29b07e535a07..70b8b9d0831f 100644
+--- a/Makefile.am
++++ b/Makefile.am
+@@ -1,3 +1,3 @@
+-SUBDIRS = include src doc examples test
++SUBDIRS = include src
+ ACLOCAL_AMFLAGS = -I m4
+ 
+diff --git a/Makefile.in b/Makefile.in
+index 7c684baa03c9..57c139782e30 100644
+--- a/Makefile.in
++++ b/Makefile.in
+@@ -380,7 +380,7 @@ target_alias = @target_alias@
+ top_build_prefix = @top_build_prefix@
+ top_builddir = @top_builddir@
+ top_srcdir = @top_srcdir@
+-SUBDIRS = include src doc examples test
++SUBDIRS = include src 
+ ACLOCAL_AMFLAGS = -I m4
+ all: all-recursive
+ 
+diff --git a/configure b/configure
+index 52a7308bc278..5939bc2dfbc6 100755
+--- a/configure
++++ b/configure
+@@ -13274,8 +13274,8 @@ if { { eval echo "\"\$as_me\":${as_lineno-$LINENO}: \"$ac_compile\""; } >&5
+     -L* | -R* | -l*)
+        # Some compilers place space between "-{L,R}" and the path.
+        # Remove the space.
+-       if test x-L = "$p" ||
+-          test x-R = "$p"; then
++       if test x-L = x"$p" ||
++          test x-R = x"$p" || test x-l = x"$p"; then
+ 	 prev=$p
+ 	 continue
+        fi
+diff --git a/configure.ac b/configure.ac
+index f2bd5c691af8..52b4dcdd9c54 100644
+--- a/configure.ac
++++ b/configure.ac
+@@ -111,9 +111,6 @@ AM_CONDITIONAL([DX_FLAG_ps], [test $DX_FLAG_ps -eq 1])
+ 
+ AC_CONFIG_FILES([
+         Makefile
+-        doc/Makefile
+-        doc/Doxyfile
+-        examples/Makefile
+         include/Makefile
+         src/Makefile
+         test/Makefile

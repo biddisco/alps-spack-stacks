@@ -1,160 +1,130 @@
 nvidia:
   compiler:
-      - toolchain: gcc
-        spec: gcc
-      - toolchain: llvm
-        spec: nvhpc
+    - toolchain: gcc
+      spec: gcc
+    - toolchain: llvm
+      spec: nvhpc
   unify: when_possible
   mpi:
-      spec: cray-mpich@8.1.29%nvhpc
-      gpu: cuda
+    spec: cray-mpich@8.1.29%nvhpc
+    gpu: cuda
   specs:
-  # packages with fortran support must be compikled with nvhpc to ensure mod file compatibility
-  #- eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
-  - netcdf-fortran%nvhpc
-  - osu-micro-benchmarks@5.9%nvhpc
+    - python@3.10                     %gcc
+    - cmake@3.27.9                    %gcc
+    - cuda@12.3                       %gcc
 
-  # compile all fortran enabled packages using nvhpc
-  - hdf5%nvhpc                  +fortran +hl
-  - libcatalyst%nvhpc +mpi      +fortran +python
-  - eccodes@2.34.0%nvhpc        +fortran +aec +tools +openmp +shared jp2k=jasper
-  - libcdi-pio@master%nvhpc     +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=none
-  - netcdf-fortran@4.6.1%nvhpc  ~doc+pic +shared  
-  - serialbox@2.6.1%nvhpc       +fortran +async-api+c~examples~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem     
-  - yaxt@0.9.3.1%nvhpc          +fortran +shared  
+    # compile all fortran enabled packages using nvhpc
+    - hdf5                  %nvhpc +fortran +hl
+    - libcatalyst           %nvhpc +fortran +mpi +python
+    - eccodes@2.34.0        %nvhpc +fortran +aec +tools +openmp +shared jp2k=jasper
+    - libcdi-pio@master     %nvhpc +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes
+    - netcdf-fortran@4.6.1  %nvhpc ~doc+pic +shared
+    - serialbox@2.6.1       %nvhpc +fortran +async-api+c~examples~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem
+    - yaxt@0.9.3.1          %nvhpc +fortran +shared
+    - mtime@master          %nvhpc
+    - rte-rrtmgp@autoconf   %nvhpc
+    
+    # c2sm/icon dependencies
+    - claw@2.0.3                      %gcc@12.3.0 ~ipo
+    - libfyaml@0.8                    %gcc@12.3.0
+    - libxml2@2.10.3                  %gcc@12.3.0 +pic~python+shared
+    - netcdf-c@4.9.2                  %gcc@12.3.0 +blosc ~byterange ~dap ~fsync ~hdf4 ~jna +mpi ~nczarr_zip +optimize +parallel-netcdf +pic +shared +szip +zstd
+    - perl@5.38.0                     %gcc@12.3.0 +cpanm +opcode +open +shared +threads
 
-  - boost%gcc +atomic +chrono +container +context +coroutine +date_time +filesystem +graph +json +mpi +multithreaded +program_options +regex +serialization +shared +system +test +thread
-  - python@3.10%gcc
-  - cmake%gcc
-  - cuda@12.4%gcc
-  - hdf5%gcc
-  - hwloc%gcc
-  - netcdf-c%gcc
-  - netcdf-cxx4%gcc
-  - numactl%gcc
-  - perl%gcc
-  - numactl%gcc
+    # Icon python packages we are currently installing manually
+    # - py-gridtools-cpp@2.3.2        %gcc@12.3.0
+    # - py-gt4py@main
+    # - py-icon4py@main                %gcc@12.3.0
 
-  # everything needed for nccl on SS11
-  - aws-ofi-nccl@master%gcc
-  - nccl%gcc
-  - nccl-tests%gcc
+    # everything needed for nccl on SS11
+    - aws-ofi-nccl@master%gcc
+    - nccl%gcc
+    - nccl-tests%gcc
 
-  # c2sm/icon packages
-  - claw@2.0.3%gcc@12.3.0~ipo    
-  - libfyaml@0.8%gcc@12.3.0  
-  - libxml2@2.10.3%gcc@12.3.0+pic~python+shared  
-  - mtime@master%gcc@12.3.0  
-  - netcdf-c@4.9.2%gcc@12.3.0+blosc~byterange~dap~fsync~hdf4~jna+mpi~nczarr_zip+optimize~parallel-netcdf+pic+shared+szip+zstd   
-  - perl@5.38.0%gcc@12.3.0+cpanm+opcode+open+shared+threads   
-  # - py-gridtools-cpp@2.3.2%gcc@12.3.0  
-  # - py-gt4py@main
-  # - py-icon4py@main%gcc@12.3.0  
-  - rte-rrtmgp@autoconf%gcc@12.3.0  
+    # Build tools
+    - git-lfs                         %gcc
+    - ninja                           %gcc
+    - direnv                          %gcc
+    - libtree                         %gcc
+    - llvm@14                         %gcc ~gold ~cuda
 
+    # maths
+    - blaspp                          %gcc
+    - eigen                           %gcc
+    - fftw                            %gcc
+    - lapackpp                        %gcc
+    - openblas                        %gcc
+    - proj                            %gcc
 
-  # The following are required to stop spack from using nvhpc to build
-  # basic dependencies, some of which don't compile with nvc etc.
-  # Explicitly excluded as modules.
-  - autoconf%gcc
-  - automake%gcc
-  - ca-certificates-mozilla%gcc
-  - diffutils%gcc
-  - gnuconfig%gcc
-  - libiconv%gcc
-  - libxcrypt%gcc
-  - libxml2%gcc
-  - m4%gcc
-  - ncurses%gcc
-  - openssl%gcc
-  - xz%gcc
-  - zlib%gcc
-  - zstd%gcc
-  - c-blosc%gcc
-  - libaec%gcc
-  - jasper%gcc
-  - patchelf%gcc
-  - gmake%gcc
+    # c++ helpers
+    - fmt%gcc
+    - stdexec@main%gcc
+
+    # IO and parallelism
+    - h5hut@master%gcc
+    - lz4%gcc
+
+    # memory management
+    - jemalloc%gcc
+    - mimalloc%gcc
+
+    # profiling/testing
+    - gperftools%gcc
+    - googletest%gcc
+
+    # vtk external deps
+    - cgns@4.4.0                      %gcc
+    - double-conversion@3.3.0         %gcc
+    - gl2ps                           %gcc
+    - glew                            %gcc gl=egl
+    - jpeg                            %gcc
+    - jsoncpp                         %gcc
+    - libharu                         %gcc
+    - libtiff                         %gcc
+    - nlohmann-json                   %gcc
+    - libtheora@master                %gcc
+    - pugixml                         %gcc
+    - protobuf@:3.21                  %gcc # protobuf@3.4 - 3.21 to prevent abseil being pulled in @3.22:
+    - seacas                          %gcc
+    - utf8cpp                         %gcc
+
+    # ParaView python
+    - py-pandas                       %gcc
+    - py-matplotlib                   %gcc
+    - py-mpi4py                       %gcc
+
+    # The following are required to stop spack from using nvhpc to build
+    # basic dependencies, some of which don't compile with nvc etc.
+    - autoconf                        %gcc
+    - automake                        %gcc
+    - ca-certificates-mozilla         %gcc
+    - diffutils                       %gcc
+    - gnuconfig                       %gcc
+    - libiconv                        %gcc
+    - libxcrypt                       %gcc
+    - m4                              %gcc
+    - ncurses                         %gcc
+    - openssl                         %gcc
+    - xz                              %gcc
+    - zlib                            %gcc
+    - zstd                            %gcc
+    - c-blosc                         %gcc
+    - libaec                          %gcc
+    - jasper                          %gcc
+    - patchelf                        %gcc
+    - gmake                           %gcc
+
   variants:
-  - cuda_arch=90
-  - +mpi
-  - +cuda
+    - build_type=Release
+    - +cuda
+    - cuda_arch=90
+    - +mpi
+    - gl=egl
+    - ~x11
+    - ~examples
+    - +fortran
   packages:
-  - curl
-  - gmake
-  views:
-    default:
-
-  # Build tools
-  - git-lfs%gcc
-  - ninja%gcc
-  - direnv%gcc
-  - libtree%gcc
-  - llvm@14%gcc ~gold ~cuda
-  # maths
-  - blaspp%gcc
-  - eigen%gcc
-  - fftw%gcc
-  - lapackpp%gcc
-  - openblas%gcc
-  - proj%gcc
-  # c++ helperrs
-  #- fmt%gcc
-  #- stdexec@main%gcc
-  # IO and parallelism
-  - h5hut@master
-  - lz4
-  # cuda
-  # memory management
-  - jemalloc%gcc
-  - mimalloc%gcc
-  # system
-  - numactl%gcc
-  # profiling/testing
-  - gperftools%gcc
-  - googletest%gcc
-  # in-situ support
-  # - libcatalyst +mpi
-  # vtk external deps
-  - openjpeg%gcc 
-  - cgns@4.4.0%gcc
-  - double-conversion@3.3.0%gcc
-  - gl2ps%gcc
-  - glew%gcc gl=egl
-  - jpeg%gcc
-  - jsoncpp%gcc
-  - libharu%gcc
-  - libtiff%gcc
-  - nlohmann-json%gcc
-  - libtheora@master%gcc
-  - pugixml%gcc
-    # protobuf@3.4 - 3.21 to prevent abseil being pulled in @3.22:
-  - protobuf@:3.21%gcc 
-  - seacas%gcc
-  - utf8cpp%gcc
-  # python
-  #- python@3.11%gcc
-  - py-pandas%gcc
-  - py-matplotlib%gcc
-  - py-mpi4py%gcc
-  #- vtk-m@2.1.0 +cuda cuda_arch=90 
-  #- vtk@master +egl +mpi +opengl2 +python +cuda
-  # paraview@master +vtk +mpi +opengl2 +egl +catalyst ~raytracing +python use_vtkm=off +development_files build_edition=rendering 
-
-    #- openimagedenoise@master
-    #- ispc@main
-    #  - ospray
-  variants:
-  - build_type=Release
-  - +mpi
-  - +cuda
-  - gl=egl
-  - cuda_arch=90
-  - ~x11
-  - ~examples
-  - +fortran
-  packages:
-  - curl
-  - gmake
+    - curl
+    - gmake
   views:
     default:

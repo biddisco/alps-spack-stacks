@@ -17,8 +17,16 @@ class Mtime(AutotoolsPackage):
     license("BSD-3-Clause")
 
     version("master", branch="libmtime-2.0.0-rc")
+    #version("master", branch="master")
+
+    variant("examples", default=False, description="Enable building examples")
+
+    patch('skip-examples.patch')
 
     # depends_on("foo")
+
+    def configure_args(self):
+        return ["--enable-examples"] if self.spec.satisfies("+examples") else ["--enable-examples=no"]
 
     def install(self, spec, prefix):
         configure("--prefix=" + prefix)
