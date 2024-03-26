@@ -9,41 +9,41 @@ nvidia:
       spec: cray-mpich@8.1.29
       gpu: cuda
   specs:
-  - boost%gcc ~mpi
   - python@3.10%gcc
     #- eccodes@2.25.0%nvhpc +tools +fortran +aec +openmp jp2k=jasper
   - cmake@3.27.9%gcc
   - cuda@12.3%gcc
 
   # compile all fortran enabled packages using nvhpc
-  - hdf5%nvhpc                  +fortran +hl
+  - hdf5%nvhpc                  +fortran +hl ^cmake%gcc ^gmake%gcc ^hwloc%gcc ^automake%gcc ^autoconf%gcc ^pkgconf%gcc ^libevent%gcc
   - libcatalyst%nvhpc +mpi      +fortran +python
   - eccodes@2.34.0%nvhpc        +fortran +aec +tools +openmp +shared jp2k=jasper
-  - libcdi-pio@master%nvhpc     +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes 
+  - libcdi-pio@master%nvhpc     +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=none 
   - netcdf-fortran@4.6.1%nvhpc  ~doc+pic +shared  
   - serialbox@2.6.1%nvhpc       +fortran +async-api+c~examples~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem     
   - yaxt@0.9.3.1%nvhpc          +fortran +shared  
+  - openmpi@5 
 
+  - util-linux-uuid%gcc
   - hwloc%gcc
   - netcdf-c%gcc 
   - numactl%gcc
   - perl%gcc
 
-  - boost@1.84.0%gcc@12.3.0+multithreaded
+  # - boost@1.84.0%gcc@12.3.0+multithreaded
   - claw@2.0.3%gcc@12.3.0~ipo    
   - libfyaml@0.8%gcc@12.3.0  
   - libxml2@2.10.3%gcc@12.3.0+pic~python+shared  
   - mtime@master%gcc@12.3.0  
   - netcdf-c@4.9.2%gcc@12.3.0+blosc~byterange~dap~fsync~hdf4~jna+mpi~nczarr_zip+optimize~parallel-netcdf+pic+shared+szip+zstd   
   - perl@5.38.0%gcc@12.3.0+cpanm+opcode+open+shared+threads   
-  - py-gridtools-cpp@2.3.2%gcc@12.3.0  
-  - py-gt4py@main
-  - py-icon4py@main%gcc@12.3.0  
+  # - py-gridtools-cpp@2.3.2%gcc@12.3.0  
+  # - py-gt4py@main
+  # - py-icon4py@main%gcc@12.3.0  
   - rte-rrtmgp@autoconf%gcc@12.3.0  
  
   # The following are required to stop spack from using nvhpc to build
   # basic dependencies, some of which don't compile with nvc etc.
-  # Explicitly excluded as modules.
   - autoconf%gcc
   - automake%gcc
   - ca-certificates-mozilla%gcc
@@ -64,9 +64,13 @@ nvidia:
   - patchelf%gcc
   - gmake%gcc
   variants:
-  - cuda_arch=90
+  - build_type=Release
   - +mpi
   - +cuda
+  - gl=egl
+  - cuda_arch=90
+  - ~x11
+  - ~examples
   - +fortran
   packages:
   - curl
