@@ -15,6 +15,7 @@ class Claw(CMakePackage):
     git = 'https://github.com/claw-project/claw-compiler.git'
     maintainers = ['clementval', 'skosukhin']
 
+    version('master', branch="master", submodules=True)
     version('2.1', tag='v2.1', submodules=True)
     version('2.0.3', tag='v2.0.3', submodules=True)
     version('2.0.2', tag='v2.0.2', submodules=True)
@@ -34,6 +35,8 @@ class Claw(CMakePackage):
     depends_on('java@8:', when="@2.0:")
     depends_on('java@7:', when="@1.1.0:1.2.3")
     depends_on('libxml2')
+
+    patch("va_list.patch");
 
     # Enable parsing of source files with calls to TRACEBACKQQ from the Intel
     # Fortran run-time library:

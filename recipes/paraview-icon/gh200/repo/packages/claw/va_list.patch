@@ -1,0 +1,118 @@
+diff --git a/xcodeml-tools/C-FrontEnd/src/c-xcodeml.c b/xcodeml-tools/C-FrontEnd/src/c-xcodeml.c
+index b7b8dcc4c5ef..b2288b507668 100644
+--- a/xcodeml-tools/C-FrontEnd/src/c-xcodeml.c
++++ b/xcodeml-tools/C-FrontEnd/src/c-xcodeml.c
+@@ -183,12 +183,12 @@ outxContextWithTag(FILE *fp, int indent, CExpr *expr, const char *tag)
+ 
+ void
+ voutxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
+-    const char *attrFmt, va_list args)
++    const char *attrFmt, va_list *args)
+ {
+     outxPrint(fp, indent, "<%s", tag);
+ 
+     if(attrFmt)
+-        vfprintf(fp, attrFmt, args);
++        vfprintf(fp, attrFmt, *args);
+ 
+     if(expr && (xattrFlag & XATTR_TYPE) > 0) {
+         const char *typeId;
+@@ -248,7 +248,7 @@ outxTag(FILE *fp, int indent, CExpr *expr, const char *tag, int xattrFlag,
+     va_list args;
+     if(attrFmt) {
+         va_start(args, attrFmt);
+-        voutxTag(fp, indent, expr, tag, xattrFlag, attrFmt, args);
++        voutxTag(fp, indent, expr, tag, xattrFlag, attrFmt, &args);
+         va_end(args);
+     } else {
+         voutxTag(fp, indent, expr, tag, xattrFlag, attrFmt, NULL);
+@@ -279,7 +279,7 @@ outxTagForStmt(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrF
+         va_start(args, attrFmt);
+         voutxTag(fp, indent, expr, tag,
+             XATTR_LINENO|XATTR_COMMON|addXattrFlag,
+-            attrFmt, args);
++            attrFmt, &args);
+         va_end(args);
+     } else {
+         voutxTag(fp, indent, expr, tag,
+@@ -298,7 +298,7 @@ outxTagForExpr(FILE *fp, int indent, CExpr *expr, const char *tag, int addXattrF
+         va_start(args, attrFmt);
+         voutxTag(fp, indent, expr, tag,
+             XATTR_TYPE|XATTR_IS_GCCEXTENSION|XATTR_COMMON|addXattrFlag,
+-            attrFmt, args);
++            attrFmt, &args);
+         va_end(args);
+     } else {
+         voutxTag(fp, indent, expr, tag,
+diff --git a/xcodeml-tools/F-FrontEnd/src/F-output-xcodeml.c b/xcodeml-tools/F-FrontEnd/src/F-output-xcodeml.c
+index 3b0437789a43..5ec47fe2a8e7 100644
+--- a/xcodeml-tools/F-FrontEnd/src/F-output-xcodeml.c
++++ b/xcodeml-tools/F-FrontEnd/src/F-output-xcodeml.c
+@@ -1164,12 +1164,12 @@ static void outx_lineno(lineno_info *li)
+  * output tag with format and lineno attribute
+  */
+ static void outx_vtagLineno(int l, const char *tag, lineno_info *li,
+-                            va_list args)
++                            va_list *args)
+ {
+     sds_string buf1 = sdsempty(), buf2 = sdsempty();
+     buf1 = sdscatprintf(buf1, "<%s", tag);
+     if (args != NULL) {
+-        buf2 = sdscatvprintf(buf2, buf1, args);
++        buf2 = sdscatvprintf(buf2, buf1, *args);
+     } else {
+         buf2 = sdscpy(buf2, buf1);
+     }
+@@ -1193,7 +1193,7 @@ static void outx_tagOfStatement1(int l, expv v, const char *attrs, ...)
+     s_charBuf = sdscatprintf(s_charBuf, "%s%s", XTAG(v), attrs ? attrs : "");
+     va_list args;
+     va_start(args, attrs);
+-    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), args);
++    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), &args);
+     va_end(args);
+     outx_puts(">\n");
+     sdsfree(s_charBuf);
+@@ -1240,14 +1240,14 @@ static void outx_tagOfStatementNoChild(int l, expv v, const char *attrs, ...)
+     s_charBuf = sdscatprintf(s_charBuf, "%s%s", XTAG(v), attrs ? attrs : "");
+     va_list args;
+     va_start(args, attrs);
+-    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), args);
++    outx_vtagLineno(l, s_charBuf, EXPR_LINE(v), &args);
+     va_end(args);
+     outx_puts("/>\n");
+     sdsfree(s_charBuf);
+ }
+ 
+ static void outx_vtagOfDecl(int l, const char *tag, lineno_info *li,
+-                            va_list args)
++                            va_list *args)
+ {
+     outx_vtagLineno(l, tag, li, args);
+ }
+@@ -1256,7 +1256,7 @@ static void outx_tagOfDecl1(int l, const char *tag, lineno_info *li, ...)
+ {
+     va_list args;
+     va_start(args, li);
+-    outx_vtagOfDecl(l, tag, li, args);
++    outx_vtagOfDecl(l, tag, li, &args);
+     va_end(args);
+     outx_puts(">\n");
+ }
+@@ -1265,7 +1265,7 @@ static void outx_tagOfDeclNoClose(int l, const char *tag, lineno_info *li, ...)
+ {
+     va_list args;
+     va_start(args, li);
+-    outx_vtagOfDecl(l, tag, li, args);
++    outx_vtagOfDecl(l, tag, li, &args);
+     va_end(args);
+ }
+ 
+@@ -1273,7 +1273,7 @@ static void outx_tagOfDeclNoChild(int l, const char *tag, lineno_info *li, ...)
+ {
+     va_list args;
+     va_start(args, li);
+-    outx_vtagOfDecl(l, tag, li, args);
++    outx_vtagOfDecl(l, tag, li, &args);
+     va_end(args);
+     outx_puts("/>\n");
+ }

@@ -7,10 +7,10 @@ class LibcdiPio(AutotoolsPackage):
     """A version of CDI with parallel I/O features."""
 
     homepage = 'https://gitlab.dkrz.de/dkrz-sw/cdi-pio'
-    git = '/home/biddisco/src/icon-root/cdi'
-    #git@gitlab.dkrz.de:mpim-sw/libcdi.git'
+    git = 'http://gitlab.dkrz.de/mpim-sw/libcdi.git'
 
     version('master', branch='icon-temp-master')
+    version('develop', branch='develop')
 
     variant('shared', default=True, description='Enable shared libraries')
     variant('netcdf', default=True, description='Enable NetCDF support')
@@ -32,6 +32,10 @@ class LibcdiPio(AutotoolsPackage):
     variant('mpi', default=True, description='Enable parallel output features')
 
     depends_on('pkgconfig', type='build')
+    depends_on("automake@1.16", type="build")
+    depends_on("autoconf", type="build")
+    depends_on("libtool", type="build")
+    depends_on("ruby", type="build")
 
     depends_on('netcdf-c', when='+netcdf')
     # The library implicitly links to HDF5 when NetCDF support is enabled
@@ -62,6 +66,12 @@ class LibcdiPio(AutotoolsPackage):
     # The library uses librt but does not check whether it is available without
     # the respective linker flag:
     #patch('librt.patch', when='+mpi')
+
+    # def autoreconf(self, spec, prefix):
+    #     """Not needed usually, configure should be already there"""
+    #     # bootstrap with autotools
+    #     bash = which("bash")
+    #     bash("./autogen.sh")
 
     @property
     def libs(self):

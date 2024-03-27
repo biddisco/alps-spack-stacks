@@ -13,35 +13,34 @@ nvidia:
     - cmake@3.27.9                    %gcc
     - cuda@12.3                       %gcc
 
-    # compile all fortran enabled packages using nvhpc
+    # icon support : compile all fortran enabled packages using nvhpc
     - hdf5                  %nvhpc +fortran +hl
     - libcatalyst           %nvhpc +fortran +mpi +python
     - eccodes@2.34.0        %nvhpc +fortran +aec +tools +openmp +shared jp2k=jasper
-    - libcdi-pio@master     %nvhpc +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes
+    - libcdi-pio@develop    %nvhpc +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes
     - netcdf-fortran@4.6.1  %nvhpc ~doc+pic +shared
     - serialbox@2.6.1       %nvhpc +fortran +async-api+c~examples~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem
     - yaxt@0.9.3.1          %nvhpc +fortran +shared
     - mtime@master          %nvhpc
     - rte-rrtmgp@autoconf   %nvhpc
     
-    # c2sm/icon dependencies
-    - claw@2.0.3                      %gcc@12.3.0 ~ipo
-    - libfyaml@0.8                    %gcc@12.3.0
-    - libxml2@2.10.3                  %gcc@12.3.0 +pic~python+shared
-    - netcdf-c@4.9.2                  %gcc@12.3.0 +blosc ~byterange ~dap ~fsync ~hdf4 ~jna +mpi ~nczarr_zip +optimize +parallel-netcdf +pic +shared +szip +zstd
-    - perl@5.38.0                     %gcc@12.3.0 +cpanm +opcode +open +shared +threads
+    # c2sm/icon dependencies that don't need fortran compilation, use gcc
+    - libfyaml@0.8          %gcc
+    - libxml2@2.10.3        %gcc +pic~python+shared
+    - netcdf-c@4.9.2        %gcc +blosc ~byterange ~dap ~fsync ~hdf4 ~jna +mpi ~nczarr_zip +optimize +parallel-netcdf +pic +shared +szip +zstd
+    - perl@5.38.0           %gcc +cpanm +opcode +open +shared +threads
 
     # Icon python packages we are currently installing manually
     # - py-gridtools-cpp@2.3.2        %gcc@12.3.0
     # - py-gt4py@main
     # - py-icon4py@main                %gcc@12.3.0
 
-    # everything needed for nccl on SS11
+    # everything needed for nccl on SS11 (from Ben's setup)
     - aws-ofi-nccl@master%gcc
     - nccl%gcc
     - nccl-tests%gcc
 
-    # Build tools
+    # Build + repo tools
     - git-lfs                         %gcc
     - ninja                           %gcc
     - direnv                          %gcc
@@ -58,19 +57,19 @@ nvidia:
 
     # c++ helpers
     - fmt%gcc
-    - stdexec@main%gcc
+    - stdexec@main                    %gcc
 
     # IO and parallelism
-    - h5hut@master%gcc
-    - lz4%gcc
+    - h5hut@master                    %gcc
+    - lz4                             %gcc
 
     # memory management
-    - jemalloc%gcc
-    - mimalloc%gcc
+    - jemalloc                        %gcc
+    - mimalloc                        %gcc
 
     # profiling/testing
-    - gperftools%gcc
-    - googletest%gcc
+    - gperftools                      %gcc
+    - googletest                      %gcc
 
     # vtk external deps
     - cgns@4.4.0                      %gcc
@@ -96,7 +95,7 @@ nvidia:
     # The following are required to stop spack from using nvhpc to build
     # basic dependencies, some of which don't compile with nvc etc.
     - autoconf                        %gcc
-    - automake                        %gcc
+    - automake@1.16                   %gcc
     - ca-certificates-mozilla         %gcc
     - diffutils                       %gcc
     - gnuconfig                       %gcc

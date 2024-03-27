@@ -11,12 +11,18 @@ class RteRrtmgp(AutotoolsPackage):
 
     homepage = "https://github.com/earth-system-radiation/rte-rrtmgp"
     url = "https://github.com/earth-system-radiation/rte-rrtmgp/wiki"
-    git = "/home/biddisco/src/icon-exclaim/externals/rte-rrtmgp"
+
+    # laptop location
+    # git = "/home/biddisco/src/icon-exclaim/externals/rte-rrtmgp"
+
+    # santis location
+    git = "/bret/scratch/cscs/biddisco/rte-rrtmgp"
+
+    # actual git repo
     #git = "https://github.com/earth-system-radiation/rte-rrtmgp.git"
+    
     maintainers = ["biddisco"]
-
     license("BSD-3-Clause")
-
     version("autoconf", branch="autoconf")
 
     # depends_on("foo")
