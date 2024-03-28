@@ -1,4 +1,4 @@
-nvidia:
+icon-dsl-paraview:
   compiler:
     - toolchain: gcc
       spec: gcc
@@ -9,13 +9,13 @@ nvidia:
     spec: cray-mpich@8.1.29%nvhpc
     gpu: cuda
   specs:
-    - python@3.10                     %gcc
-    - cmake@3.27.9                    %gcc
+    # CUDA and python
     - cuda@12.3                       %gcc
+    - python@3.10                     %gcc
 
     # icon support : compile all fortran enabled packages using nvhpc
     - hdf5                  %nvhpc +fortran +hl
-    - libcatalyst           %nvhpc +fortran +mpi +python
+    - libcatalyst@2.0.0     %nvhpc +fortran +mpi +python
     - eccodes@2.34.0        %nvhpc +fortran +aec +tools +openmp +shared jp2k=jasper
     - libcdi-pio@develop    %nvhpc +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes
     - netcdf-fortran@4.6.1  %nvhpc ~doc+pic +shared
@@ -41,6 +41,7 @@ nvidia:
     - nccl-tests%gcc
 
     # Build + repo tools
+    - cmake@3.27                      %gcc
     - git-lfs                         %gcc
     - ninja                           %gcc
     - direnv                          %gcc
@@ -56,7 +57,7 @@ nvidia:
     - proj                            %gcc
 
     # c++ helpers
-    - fmt%gcc
+    - fmt                             %gcc
     - stdexec@main                    %gcc
 
     # IO and parallelism
@@ -95,7 +96,7 @@ nvidia:
     # The following are required to stop spack from using nvhpc to build
     # basic dependencies, some of which don't compile with nvc etc.
     - autoconf                        %gcc
-    - automake@1.16                   %gcc
+    - automake                        %gcc
     - ca-certificates-mozilla         %gcc
     - diffutils                       %gcc
     - gnuconfig                       %gcc
