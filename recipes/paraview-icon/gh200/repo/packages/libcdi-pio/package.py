@@ -67,11 +67,6 @@ class LibcdiPio(AutotoolsPackage):
     # the respective linker flag:
     #patch('librt.patch', when='+mpi')
 
-    # def autoreconf(self, spec, prefix):
-    #     """Not needed usually, configure should be already there"""
-    #     # bootstrap with autotools
-    #     bash = which("bash")
-    #     bash("./autogen.sh")
 
     @property
     def libs(self):

@@ -1,99 +1,113 @@
 #!/bin/bash
 
-# =====================================
+# -------------------------------------
 # we output messages to stdout and also stderr to simplify debugging since logs are usually in 
 # separate files and we want to see where errors are happening in the script
-function debug_output1() {
-    echo
-    echo "=====================================" 
-    echo "===== $1"
-    echo "====================================="
-} 
-
 function debug_output() {
-    debug_output1 $1 | tee >(cat >&2)
-} 
+    {
+        echo ""
+        echo "-------------------------------------" 
+        echo "-- $1"
+        echo "-------------------------------------"
+    } | tee >(cat >&2)
+}
 
-# =====================================
+# -------------------------------------
 debug_output "post install hook"
-mount_path={{ env.mount }}
-echo RUNNING IN $mount_path
-config_path={{ env.config }}
-echo config is in $config_path
+MOUNT_PATH={{ env.mount }}
+CONFIG_PATH={{ env.config }}
+HOME=$(pwd)
+echo running in   : $MOUNT_PATH
+echo HOME is      : $HOME
+echo config is in : $CONFIG_PATH
 
-# =====================================
+# -------------------------------------
 debug_output "environment variables"
 printenv
 
-# =====================================
-debug_output "create post file $mount_path/post"
-echo "$(date)" > "$mount_path/post"
-
-# =====================================
+# -------------------------------------
 debug_output "set vars we need frequently"
-HOME=$(pwd)
-SPACK_CMD="spack -C $config_path"
+SPACK_CMD="spack -C $CONFIG_PATH"
 
-# =====================================
-debug_output "list all spack packages"
+# -------------------------------------
+debug_output "Debug: list all spack packages"
 $SPACK_CMD find -flv
 
-# =====================================
-debug_output "list all spack environments"
+# -------------------------------------
+debug_output "source spack setup"
 SPACK_ROOT=$( $SPACK_CMD location -r )
 source $SPACK_ROOT/share/spack/setup-env.sh
 
-# =====================================
-debug_output "convert stackinator environment into a package"
-python3 $HOME/store/meta/recipe/env-to-package.py $HOME/store/meta/recipe/environments.yaml 
-# remove explicit gcc version as this causes a concretization error
-sed -i 's/%gcc//g' $(spack location -p temppackage)/package.py
+# # -------------------------------------
+# debug_output "convert stackinator environment into a package"
+# python3 $HOME/store/meta/recipe/scripts/env-to-package.py $HOME/store/meta/recipe/environments.yaml 
+# # remove explicit gcc version as this causes a concretization error
+# sed -i 's/%gcc//g' $( $SPACK_CMD location -p temppackage )/package.py
+# # make a copy of the package.py file for possible user consumption
+# mkdir $HOME/temppackage
+# cp $( $SPACK_CMD location -p temppackage )/package.py $HOME/temppackage/package.py
 
-# =====================================
-debug_output "create build-env"
-BUILD_ENV=$mount_path/paraview-buildenv.rc
-SPEC="temppackage %gcc@12.3"
-$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ env activate --sh
-$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ add $SPEC
-$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ concretize
-$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ build-env --dump $BUILD_ENV "$SPEC"
+# # -------------------------------------
+# debug_output "create build-env (gcc)"
+# BUILD_ENV_GCC=$MOUNT_PATH/paraview-buildenv.rc
+# SPEC="temppackage %gcc@12.3"
+# $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ env activate --sh
+# $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ add $SPEC
+# $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ concretize
+# $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ build-env --dump $BUILD_ENV_GCC "$SPEC"
 
-# =====================================
-debug_output "create $mount_path/src dir"
-mkdir -p $mount_path/src
-cd $mount_path/src
+# # -------------------------------------
+# debug_output "source build-env"
+# source $BUILD_ENV_GCC
 
-# =====================================
+# -------------------------------------
+debug_output "load spack ENV created by stackinator"
+#$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ env activate --sh
+
+# -------------------------------------
+debug_output "load spack ENV created by stackinator"
+source $MOUNT_PATH/env/default/activate.sh
+
+# -------------------------------------
+debug_output "create SRC_ROOT=$MOUNT_PATH/src dir"
+SRC_ROOT=$MOUNT_PATH/src
+BUILD_ROOT=$MOUNT_PATH/build
+mkdir -p $BUILD_ROOT
+mkdir -p $SRC_ROOT && cd $SRC_ROOT
+
+# -------------------------------------
 debug_output "clone paraview"
-PARAVIEW_VERSION=5.12.0
+PARAVIEW_VERSION_SHORT=5.12
+PARAVIEW_VERSION_FULL=5.12.0
+PARAVIEW_SRC_DIR=$SRC_ROOT/paraview
+PARAVIEW_INSTALL_DIR=$MOUNT_PATH/paraview
+PARAVIEW_BUILD_DIR=$BUILD_ROOT/paraview
+PARAVIEW_PLUGIN_DIR=$MOUNT_PATH/paraview-plugins
 
 # get default paraview master branch
 git clone https://gitlab.kitware.com/paraview/paraview.git
-cd $mount_path/src/paraview
+cd $PARAVIEW_SRC_DIR
 
-debug_output "switch to version ${PARAVIEW_VERSION} from tag v${PARAVIEW_VERSION}"
-git checkout -b ${PARAVIEW_VERSION} v${PARAVIEW_VERSION}
+# -------------------------------------
+debug_output "switch to version ${PARAVIEW_VERSION_FULL} from tag v${PARAVIEW_VERSION_FULL}"
+git checkout -b ${PARAVIEW_VERSION_FULL} v${PARAVIEW_VERSION_FULL}
 git submodule update --init --recursive
 
-# =====================================
+# -------------------------------------
 debug_output "Update VTK Submodules"
-cd $mount_path/src/paraview/VTK
+cd $PARAVIEW_SRC_DIR/VTK
 git submodule update 
 
-# =====================================
+# -------------------------------------
 debug_output "change to 2.1.0 branch of vtk-m"
-cd $mount_path/src/paraview/VTK/ThirdParty/vtkm/vtkvtkm/vtk-m
+cd $PARAVIEW_SRC_DIR/VTK/ThirdParty/vtkm/vtkvtkm/vtk-m
 git checkout v2.1.0
 
-# =====================================
-debug_output "source build-env"
-source $BUILD_ENV
-
-# =====================================
+# -------------------------------------
 debug_output "run cmake on paraview"
-mkdir -p $mount_path/build/pv && cd $mount_path/build/pv
+mkdir -p $PARAVIEW_BUILD_DIR && cd $PARAVIEW_BUILD_DIR
 cmake -G Ninja \
-    -DCMAKE_INSTALL_PREFIX=$mount_path/paraview \
+    -DCMAKE_INSTALL_PREFIX=$PARAVIEW_INSTALL_DIR \
     -DPARAVIEW_USE_QT=OFF \
     -DPARAVIEW_INSTALL_DEVELOPMENT_FILES=ON \
     -DPARAVIEW_USE_MPI=ON \
@@ -101,10 +115,11 @@ cmake -G Ninja \
     -DVTK_OPENGL_HAS_EGL=ON \
     -DPARAVIEW_USE_PYTHON=ON \
     -DPARAVIEW_ENABLE_CATALYST=YES \
-    -Dcatalyst_DIR=$($SPACK_CMD location -i libcatalyst) \
+    `# temporarily disable vtkm for build speed` \
     -DPARAVIEW_USE_CUDA=OFF \
     -DCMAKE_CUDA_ARCHITECTURES=90 \
     -DPARAVIEW_BUILD_WITH_EXTERNAL=ON \
+    `# the following externals are not yet fully supported` \
     -DVTK_MODULE_USE_EXTERNAL_VTK_fast_float=OFF \
     -DVTK_MODULE_USE_EXTERNAL_VTK_token=OFF \
     -DVTK_MODULE_USE_EXTERNAL_VTK_exprtk=OFF \
@@ -113,7 +128,7 @@ cmake -G Ninja \
     -DVTK_MODULE_USE_EXTERNAL_VTK_cli11=OFF \
     -DVTK_MODULE_USE_EXTERNAL_VTK_ioss=OFF \
     -DVTK_MODULE_USE_EXTERNAL_VTK_cgns=OFF \
-    $mount_path/src/paraview/
+    $PARAVIEW_SRC_DIR
 
     # -DVTK_MODULE_USE_EXTERNAL_VTK_doubleconversion=OFF \
     # -DVTK_MODULE_ENABLE_VTK_cgns=NO \
@@ -121,40 +136,68 @@ cmake -G Ninja \
     # -DVTK_MODULE_ENABLE_ParaView_VTKExtensionsIOParallelCGNSWriter=NO \
     # -DVTK_MODULE_ENABLE_VTK_IOCGNSReader=NO \
     # -DVTK_MODULE_ENABLE_VTK_ioss=NO \
+    # -Dcatalyst_DIR=$($SPACK_CMD location -i libcatalyst) \
 
-# =====================================
+# -------------------------------------
 debug_output "build and install paraview"
 ninja 
 ninja install
 ninja clean
 
-PARAVIEW_DIR=$mount_path/paraview
-PARAVIEW_VERSION=5.12
-
-# =====================================
-debug_output "build icon"
-
-# =====================================
+# -------------------------------------
 debug_output "build paraview plugin"
-cd $mount_path/src
+cd $SRC_ROOT
 git clone https://github.com/jfavre/ParaViewGadgetPlugin
-mkdir $mount_path/build/ParaViewGadgetPlugin && cd $mount_path/build/ParaViewGadgetPlugin
+mkdir $BUILD_ROOT/ParaViewGadgetPlugin && cd $BUILD_ROOT/ParaViewGadgetPlugin
 
 cmake -G Ninja \
-    -DParaView_DIR=$PARAVIEW_DIR/lib64/cmake/paraview-$PARAVIEW_VERSION \
-    -DCMAKE_INSTALL_PREFIX=$mount_path/paraview-plugins \
-    $mount_path/src/ParaViewGadgetPlugin       
+    -DParaView_DIR=$PARAVIEW_INSTALL_DIR/lib64/cmake/paraview-$PARAVIEW_VERSION_SHORT \
+    -DCMAKE_INSTALL_PREFIX=$PARAVIEW_PLUGIN_DIR \
+    $SRC_ROOT/ParaViewGadgetPlugin       
 ninja
 ninja install
 ninja clean
 
-# =====================================
-debug_output "set permissions"
-chmod -R a+r $BUILD_ENV
-chmod -R a+r $mount_path/src
-chmod -R a+r $mount_path/build
-chmod -R a+r $mount_path/paraview
-chmod -R a+r $mount_path/paraview-plugins
+# -------------------------------------
+# debug_output "setup NVHPC compiler"
+# export CC=$( $SPACK_CMD location -i nvhpc )/Linux_aarch64/24.3/compilers/bin/nvc
+# export CXX=$( $SPACK_CMD location -i nvhpc )/Linux_aarch64/24.3/compilers/bin/nvc++
+# export FC=$( $SPACK_CMD location -i nvhpc )/Linux_aarch64/24.3/compilers/bin/nvfortran
+# echo "CC  = "$CC 
+# echo "CXX = "$CXX 
+# echo "FC  = "$FC
 
-# =====================================
+# -------------------------------------
+debug_output "build catalyst example/test"
+CATALYST_EXAMPLE_SRC=$SRC_ROOT/Fortran90FullExample
+CATALYST_EXAMPLE_BUILD=$BUILD_ROOT/Fortran90FullExample
+cp -r $PARAVIEW_SRC_DIR/Examples/Catalyst2/Fortran90FullExample $SRC_ROOT
+mkdir -p $CATALYST_EXAMPLE_BUILD && cd $CATALYST_EXAMPLE_BUILD
+cmake -G Ninja $CATALYST_EXAMPLE_SRC
+ninja
+# modify path in catalyst script work standalone
+sed -i '1s/^/import os\n/' $CATALYST_EXAMPLE_SRC/catalyst_pipeline.py
+sed -i '/EnableCatalystLive/aoptions.ExtractsOutputDirectory = os.getenv("SCRATCH")+"/datasets"' $CATALYST_EXAMPLE_SRC/catalyst_pipeline.py
+
+# -------------------------------------
+debug_output "run catalyst example/test"
+PARAVIEW_INSTALL_DIR=$MOUNT_PATH/paraview
+export LD_LIBRARY_PATH=$PARAVIEW_INSTALL_DIR/lib64:$PARAVIEW_INSTALL_DIR/lib64/catalyst:$LD_LIBRARY_PATH
+export CATALYST_IMPLEMENTATION_PATHS=$PARAVIEW_INSTALL_DIR/lib64/catalyst
+
+echo "LD_LIBRARY_PATH  = "$LD_LIBRARY_PATH
+./bin/Fortran90FullExampleV2 $CATALYST_EXAMPLE_SRC/catalyst_pipeline.py
+
+# -------------------------------------
+debug_output "build icon"
+
+# -------------------------------------
+debug_output "set permissions"
+chmod -R a+r $BUILD_ENV_GCC
+chmod -R a+r $SRC_ROOT
+chmod -R a+r $BUILD_ROOT
+chmod -R a+r $PARAVIEW_INSTALL_DIR
+chmod -R a+r $PARAVIEW_PLUGIN_DIR
+
+# -------------------------------------
 debug_output "Done"

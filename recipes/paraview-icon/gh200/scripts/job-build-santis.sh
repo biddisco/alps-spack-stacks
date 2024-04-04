@@ -31,7 +31,9 @@ $STACKI_DIR/bin/stack-config -s $SYSTEM_DIR -b ${BUILD_DIR} -r $RECIPE_DIR -c $R
 echo "# -----------------------------------------"
 echo "Trigger build"
 cd /dev/shm/biddisco
-env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME=$HOME https_proxy=$https_proxy http_proxy=$http_proxy no_proxy="$no_proxy" make store.squashfs -j32
+export http_proxy=http://proxy.cscs.ch:8080
+export https_proxy=$http_proxy
+env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" https_proxy="http_proxy=http://proxy.cscs.ch:8080" http_proxy="http_proxy=http://proxy.cscs.ch:8080" no_proxy="$no_proxy" make store.squashfs -j32
 
 echo "# -----------------------------------------"
 echo "Force push anything that was built successfully"

@@ -15,7 +15,8 @@ icon-dsl-paraview:
 
     # icon support : compile all fortran enabled packages using nvhpc
     - hdf5                  %nvhpc +fortran +hl
-    - libcatalyst@2.0.0     %nvhpc +fortran +mpi +python
+    - libcatalyst@2.0.0     %nvhpc +fortran +mpi +python 
+    # +conduit
     - eccodes@2.34.0        %nvhpc +fortran +aec +tools +openmp +shared jp2k=jasper
     - libcdi-pio@develop    %nvhpc +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes
     - netcdf-fortran@4.6.1  %nvhpc ~doc+pic +shared
@@ -46,7 +47,7 @@ icon-dsl-paraview:
     - ninja                           %gcc
     - direnv                          %gcc
     - libtree                         %gcc
-    - llvm@14                         %gcc ~gold ~cuda
+    - llvm                            %gcc ~gold 
 
     # maths
     - blaspp                          %gcc
@@ -59,10 +60,12 @@ icon-dsl-paraview:
     # c++ helpers
     - fmt                             %gcc
     - stdexec@main                    %gcc
+    - boost                           %gcc +atomic +container +context +coroutine +json +multithreaded +program_options +serialization +shared +system +test +thread
 
     # IO and parallelism
     - h5hut@master                    %gcc
     - lz4                             %gcc
+    - libxml2                         %gcc
 
     # memory management
     - jemalloc                        %gcc
