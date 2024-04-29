@@ -1,6 +1,6 @@
 name: paraview-jb-dev
 store: /mnt/user-environment
-description: ParaView visualization tool
+description: icon-paraview
 
 spack:
   repo: /home/biddisco/opt/spack.git

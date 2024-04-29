@@ -56,12 +56,7 @@ icon-dsl-paraview:
     - lapackpp                        %gcc
     - openblas                        %gcc
     - proj                            %gcc
-    - nvpl-lapack                     %gcc
-    - nvpl-blas                       %gcc
 
-    # CUDA/HIP support
-    - whip@master                     %gcc
-     
     # c++ helpers
     - fmt                             %gcc
     - stdexec@main                    %gcc
