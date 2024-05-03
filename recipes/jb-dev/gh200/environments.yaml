@@ -1,0 +1,64 @@
+gcc-cuda: 
+  compiler:
+    - toolchain: gcc
+      spec: gcc
+  mpi:
+    spec: cray-mpich@8.1.29
+    gpu: cuda  
+  unify: true
+
+  views:
+    default:
+
+  # stackinator will not build these, but use system ones
+  packages:
+  - git
+  - perl
+
+  specs:
+  # Build + repo tools
+  - cmake
+  - ninja
+  - git-lfs                         %gcc
+  - direnv                          %gcc
+  - libtree                         %gcc
+  - llvm                            %gcc ~gold 
+
+  # IO
+  - hdf5 +mpi ~cxx
+
+  # maths
+  - eigen                           %gcc
+  - fftw                            %gcc
+  - proj                            %gcc
+  - nvpl-blas                       %gcc threads=none
+  - nvpl-lapack                     %gcc threads=none
+  - blaspp                          %gcc ~openmp ~cuda
+  - openblas                        %gcc
+  - lapackpp                        %gcc
+
+  # CUDA/HIP support
+  - whip@main                       %gcc
+
+  # c++ helpers
+  - fmt                             %gcc
+  - stdexec@main                    %gcc
+  - boost                           %gcc +atomic +container +context +coroutine +json +multithreaded +program_options +serialization +shared +system +test +thread
+
+  # allocators/memory management
+  - mimalloc
+  - umpire ~cuda ~shared
+
+  # profiling/testing
+  - gperftools
+  - googletest
+  - protobuf
+
+  variants: 
+  - ~fortran 
+  - build_type=Release
+  - cxxstd=17
+  - ~examples
+  - ~tests
+  - ~testing
+
