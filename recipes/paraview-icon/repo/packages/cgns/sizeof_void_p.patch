@@ -1,0 +1,15 @@
+diff --git a/CMakeLists.txt b/CMakeLists.txt
+index 5071e6444e3d..41aae77cb619 100644
+--- a/CMakeLists.txt
++++ b/CMakeLists.txt
+@@ -98,6 +98,10 @@ if ("${SIZEOF_OFF_T}" LESS 8)
+   option(CGNS_ENABLE_LFS "Enable or disable large file support" "OFF")
+ endif ()
+ 
++if (CMAKE_SIZEOF_VOID_P STREQUAL "")
++  set(CMAKE_SIZEOF_VOID_P "8")
++endif()
++
+ if ("${CMAKE_SIZEOF_VOID_P}" GREATER 4)
+   option(CGNS_ENABLE_64BIT "Enable or disable 64-bit code building" "ON")
+ else ()

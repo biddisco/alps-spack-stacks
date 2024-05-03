@@ -9,6 +9,7 @@ icon-dsl-paraview:
     spec: cray-mpich@8.1.29%nvhpc
     gpu: cuda
   specs:
+    - cray-mpich@8.1.29%nvhpc
     # CUDA and python
     - cuda@12.3                       %gcc
     - python@3.10                     %gcc
@@ -37,9 +38,9 @@ icon-dsl-paraview:
     # - py-icon4py@main                %gcc@12.3.0
 
     # everything needed for nccl on SS11 (from Ben's setup)
-    - aws-ofi-nccl@master%gcc
-    - nccl%gcc
-    - nccl-tests%gcc
+    # - aws-ofi-nccl@master%gcc
+    # - nccl%gcc
+    # - nccl-tests%gcc
 
     # Build + repo tools
     - cmake@3.27                      %gcc
@@ -50,18 +51,18 @@ icon-dsl-paraview:
     - llvm                            %gcc ~gold 
 
     # maths
-    - blaspp                          %gcc
     - eigen                           %gcc
     - fftw                            %gcc
-    - lapackpp                        %gcc
-    - openblas                        %gcc
     - proj                            %gcc
-    - nvpl-lapack                     %gcc
-    - nvpl-blas                       %gcc
+    - nvpl-blas                       %gcc threads=none
+    - nvpl-lapack                     %gcc threads=none
+    - blaspp                          %gcc ~openmp ~cuda
+    - openblas                        %gcc
+    - lapackpp                        %gcc
 
     # CUDA/HIP support
-    - whip@master                     %gcc
-     
+    - whip@main                       %gcc
+
     # c++ helpers
     - fmt                             %gcc
     - stdexec@main                    %gcc
@@ -81,7 +82,8 @@ icon-dsl-paraview:
     - googletest                      %gcc
 
     # vtk external deps
-    - cgns@4.4.0                      %gcc
+    - cgns@develop                    %gcc ~fortran 
+#    - seacas                          %gcc ~fortran ~applications ~legacy ~tests ~x11
     - double-conversion@3.3.0         %gcc
     - gl2ps                           %gcc
     - glew                            %gcc gl=egl
@@ -93,7 +95,6 @@ icon-dsl-paraview:
     - libtheora@master                %gcc
     - pugixml                         %gcc
     - protobuf@:3.21                  %gcc # protobuf@3.4 - 3.21 to prevent abseil being pulled in @3.22:
-    - seacas                          %gcc
     - utf8cpp                         %gcc
 
     # ParaView python
@@ -132,7 +133,7 @@ icon-dsl-paraview:
     - ~examples
     - +fortran
   packages:
-    - curl
-    - gmake
+    - git
+    - perl
   views:
     default:

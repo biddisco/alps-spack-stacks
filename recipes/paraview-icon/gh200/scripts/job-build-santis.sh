@@ -33,7 +33,7 @@ echo "Trigger build"
 cd /dev/shm/biddisco
 export http_proxy=http://proxy.cscs.ch:8080
 export https_proxy=$http_proxy
-env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" https_proxy="http_proxy=http://proxy.cscs.ch:8080" http_proxy="http_proxy=http://proxy.cscs.ch:8080" no_proxy="$no_proxy" make store.squashfs -j32
+env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" http_proxy=$http_proxy https_proxy=$https_proxy no_proxy="$no_proxy" make store.squashfs -j32
 
 echo "# -----------------------------------------"
 echo "Force push anything that was built successfully"

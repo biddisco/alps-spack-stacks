@@ -34,39 +34,62 @@ debug_output "Debug: list all spack packages"
 $SPACK_CMD find -flv
 
 # -------------------------------------
-debug_output "source spack setup"
-SPACK_ROOT=$( $SPACK_CMD location -r )
-source $SPACK_ROOT/share/spack/setup-env.sh
+#debug_output "source spack setup"
+#SPACK_ROOT=$( $SPACK_CMD location -r )
+#source $SPACK_ROOT/share/spack/setup-env.sh
 
 # # -------------------------------------
-# debug_output "convert stackinator environment into a package"
+#  ATTEMPT TO USE BUILT IN STACKINATOR GENERATED ENVIRONMENT 
+debug_output "convert stackinator environment into a package"
+# this must be the name declared in environments.yaml
+ENV_NAME=icon-dsl-paraview 
+python3 $HOME/store/meta/recipe/scripts/env-to-package.py $HOME/environments/$ENV_NAME/spack.yaml 
+# remove explicit gcc version as this causes a concretization error
+templocation=$( $SPACK_CMD location -p temppackage )
+echo "temppackge location is reported as " $templocation
+sed -i 's/%gcc//g' $templocation/package.py
+#sed -i '/nvhpc/d' $templocation/package.py
+# make a copy of the package.py file for possible user consumption
+mkdir $MOUNT_PATH/temppackage
+cp $templocation/package.py $MOUNT_PATH/temppackage/package.py
+
+
+# # -------------------------------------
+#  Original version that used to work pre-icon
 # python3 $HOME/store/meta/recipe/scripts/env-to-package.py $HOME/store/meta/recipe/environments.yaml 
 # # remove explicit gcc version as this causes a concretization error
-# sed -i 's/%gcc//g' $( $SPACK_CMD location -p temppackage )/package.py
+# templocation=$( $SPACK_CMD location -p temppackage )
+# echo "temppackge location is reported as " $templocation
+# sed -i 's/%gcc//g' $templocation/package.py
+# sed -i '/nvhpc/d' $templocation/package.py
 # # make a copy of the package.py file for possible user consumption
-# mkdir $HOME/temppackage
-# cp $( $SPACK_CMD location -p temppackage )/package.py $HOME/temppackage/package.py
+# mkdir $MOUNT_PATH/temppackage
+# cp $templocation/package.py $MOUNT_PATH/temppackage/package.py
+
+# -------------------------------------
+debug_output "final temppackage contents"
+cat $MOUNT_PATH/temppackage/package.py
+
+# -------------------------------------
+debug_output "create build-env (gcc)"
+BUILD_ENV_GCC=$MOUNT_PATH/paraview-buildenv.rc
+SPEC="temppackage %gcc"
+$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ env activate --sh
+$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ add $SPEC
+$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ concretize --reuse
+$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ build-env --dump $BUILD_ENV_GCC "$SPEC"
 
 # # -------------------------------------
-# debug_output "create build-env (gcc)"
-# BUILD_ENV_GCC=$MOUNT_PATH/paraview-buildenv.rc
-# SPEC="temppackage %gcc@12.3"
+debug_output "source build-env"
+source $BUILD_ENV_GCC
+
+# -------------------------------------
+# debug_output "load spack ENV created by stackinator"
 # $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ env activate --sh
-# $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ add $SPEC
-# $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ concretize
-# $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ build-env --dump $BUILD_ENV_GCC "$SPEC"
-
-# # -------------------------------------
-# debug_output "source build-env"
-# source $BUILD_ENV_GCC
 
 # -------------------------------------
-debug_output "load spack ENV created by stackinator"
-#$SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ env activate --sh
-
-# -------------------------------------
-debug_output "load spack ENV created by stackinator"
-source $MOUNT_PATH/env/default/activate.sh
+# debug_output "load spack ENV created by stackinator"
+# source $MOUNT_PATH/env/default/activate.sh
 
 # -------------------------------------
 debug_output "create SRC_ROOT=$MOUNT_PATH/src dir"
@@ -106,7 +129,8 @@ git checkout v2.1.0
 # -------------------------------------
 debug_output "run cmake on paraview"
 mkdir -p $PARAVIEW_BUILD_DIR && cd $PARAVIEW_BUILD_DIR
-cmake -G Ninja \
+# cmake -G Ninja \
+cmake  \
     -DCMAKE_INSTALL_PREFIX=$PARAVIEW_INSTALL_DIR \
     -DPARAVIEW_USE_QT=OFF \
     -DPARAVIEW_INSTALL_DEVELOPMENT_FILES=ON \
@@ -128,6 +152,7 @@ cmake -G Ninja \
     -DVTK_MODULE_USE_EXTERNAL_VTK_cli11=OFF \
     -DVTK_MODULE_USE_EXTERNAL_VTK_ioss=OFF \
     -DVTK_MODULE_USE_EXTERNAL_VTK_cgns=OFF \
+    -DVTK_MODULE_USE_EXTERNAL_VTK_seacas=OFF \
     $PARAVIEW_SRC_DIR
 
     # -DVTK_MODULE_USE_EXTERNAL_VTK_doubleconversion=OFF \
