@@ -23,7 +23,8 @@ gcc-cuda:
   - direnv                          %gcc
   - libtree                         %gcc
   - llvm                            %gcc ~gold 
-
+  - cuda
+  
   # IO
   - hdf5 +mpi ~cxx
 
@@ -47,7 +48,7 @@ gcc-cuda:
 
   # allocators/memory management
   - mimalloc
-  - umpire ~cuda ~shared
+  - umpire +cuda
 
   # profiling/testing
   - gperftools
