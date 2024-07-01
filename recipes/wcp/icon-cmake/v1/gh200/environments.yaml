@@ -67,7 +67,6 @@ nvidia:
   - build_type=Release
   - +mpi
   - +cuda
-  - gl=egl
   - cuda_arch=90
   - ~x11
   - ~examples
