@@ -3,7 +3,7 @@ gcc-cuda:
     - toolchain: gcc
       spec: gcc
   mpi:
-    spec: cray-mpich@8.1.29
+    spec: openmpi
     gpu: cuda  
   unify: true
 
@@ -63,4 +63,7 @@ gcc-cuda:
   - ~examples
   - ~tests
   - ~testing
+  - +mpi
+  - +cuda
+  - cuda_arch=90
 
