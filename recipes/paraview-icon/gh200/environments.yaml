@@ -65,7 +65,7 @@ icon-dsl-paraview:
 
     # c++ helpers
     - fmt                             %gcc
-    - stdexec@main                    %gcc
+    - stdexec@git.b39a506096900de4074ee556867a3805bd8351bd=main %gcc
     - boost                           %gcc +atomic +container +context +coroutine +json +multithreaded +program_options +serialization +shared +system +test +thread
 
     # IO and parallelism
