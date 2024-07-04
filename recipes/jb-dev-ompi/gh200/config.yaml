@@ -4,3 +4,5 @@ spack:
   repo: /bret/scratch/cscs/biddisco/spack-santis
 store: /user-environment
 description: assorted dev + other tools
+modules: false
+
