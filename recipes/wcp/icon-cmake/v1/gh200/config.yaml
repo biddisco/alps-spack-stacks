@@ -2,5 +2,5 @@ name: icon-cmake
 store: /user-environment
 spack:
   commit: jb-develop
-  repo: /capstor/scratch/cscs/biddisco/spack-santis
+  repo: /capstor/scratch/cscs/biddisco/spack-todi
 description: The tools required to build ICON blue line using cmake

@@ -15,7 +15,7 @@ class RteRrtmgp(AutotoolsPackage):
     # laptop location
     # git = "/home/biddisco/src/icon-exclaim/externals/rte-rrtmgp"
 
-    # santis location
+    # todi location
     git = "/capstor/scratch/cscs/biddisco/rte-rrtmgp"
 
     # actual git repo
