@@ -4,13 +4,36 @@ icon-dsl-paraview:
       spec: gcc
     - toolchain: llvm
       spec: nvhpc
+  
   unify: when_possible
+  
   mpi:
-    spec: cray-mpich%nvhpc
+    spec: cray-mpich@8.1.29%nvhpc
     gpu: cuda
+
+  packages:
+  - perl
+  - curl
+  - gmake
+  - autoconf
+  - automake
+  
+  variants:
+    - build_type=Release
+    - +cuda
+    - cuda_arch=90
+    - +mpi
+    - gl=egl
+    - ~x11
+    - ~examples
+    - +fortran
+  
+  views:
+    default:
+
   specs:
     # MPI 
-    - cray-mpich%nvhpc
+    - cray-mpich@8.1.29%nvhpc
 
     # CUDA and python
     - cuda@12.3                       
@@ -125,19 +148,3 @@ icon-dsl-paraview:
     # - patchelf                        
     # - gmake                           
 
-  variants:
-    - build_type=Release
-    - +cuda
-    - cuda_arch=90
-    - +mpi
-    - gl=egl
-    - ~x11
-    - ~examples
-    - +fortran
-
-  packages:
-    - git
-    - perl
-  
-  views:
-    default:
