@@ -16,7 +16,7 @@ class RteRrtmgp(AutotoolsPackage):
     # git = "/home/biddisco/src/icon-exclaim/externals/rte-rrtmgp"
 
     # santis location
-    git = "/bret/scratch/cscs/biddisco/rte-rrtmgp"
+    git = "/capstor/scratch/cscs/biddisco/rte-rrtmgp"
 
     # actual git repo
     #git = "https://github.com/earth-system-radiation/rte-rrtmgp.git"
