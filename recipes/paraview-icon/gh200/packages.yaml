@@ -1,5 +1,7 @@
 packages:
   all:
+    prefer:
+    - '%gcc'
     providers:
       gl: [egl]
   egl:
@@ -8,4 +10,4 @@ packages:
       prefix: /usr
     buildable: false
   llvm:
-    require: llvm ~gold ~cuda
+    require: llvm ~gold

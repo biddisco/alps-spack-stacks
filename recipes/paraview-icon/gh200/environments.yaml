@@ -6,13 +6,15 @@ icon-dsl-paraview:
       spec: nvhpc
   unify: when_possible
   mpi:
-    spec: cray-mpich@8.1.29%nvhpc
+    spec: cray-mpich%nvhpc
     gpu: cuda
   specs:
-    - cray-mpich@8.1.29%nvhpc
+    # MPI 
+    - cray-mpich%nvhpc
+
     # CUDA and python
-    - cuda@12.3                       %gcc
-    - python@3.10                     %gcc
+    - cuda@12.3                       
+    - python@3.10                     
 
     # icon support : compile all fortran enabled packages using nvhpc
     - hdf5                  %nvhpc +fortran +hl
@@ -26,102 +28,102 @@ icon-dsl-paraview:
     - mtime@master          %nvhpc
     - rte-rrtmgp@autoconf   %nvhpc
     
-    # c2sm/icon dependencies that don't need fortran compilation, use gcc
-    - libfyaml@0.8          %gcc
-    - libxml2@2.10.3        %gcc +pic~python+shared
-    - netcdf-c@4.9.2        %gcc +blosc ~byterange ~dap ~fsync ~hdf4 ~jna +mpi ~nczarr_zip +optimize +parallel-netcdf +pic +shared +szip +zstd
-    - perl@5.38.0           %gcc +cpanm +opcode +open +shared +threads
+    # c2sm/icon dependencies that don't need fortran compilation, can use gcc
+    - libfyaml@0.8          
+    - libxml2@2.10.3         +pic~python+shared
+    - netcdf-c@4.9.2         +blosc ~byterange ~dap ~fsync ~hdf4 ~jna +mpi ~nczarr_zip +optimize +parallel-netcdf +pic +shared +szip +zstd
+    - perl@5.38.0            +cpanm +opcode +open +shared +threads
 
     # Icon python packages we are currently installing manually
-    # - py-gridtools-cpp@2.3.2        %gcc@12.3.0
+    # - py-gridtools-cpp@2.3.2        @12.3.0
     # - py-gt4py@main
-    # - py-icon4py@main                %gcc@12.3.0
+    # - py-icon4py@main                @12.3.0
 
     # everything needed for nccl on SS11 (from Ben's setup)
-    # - aws-ofi-nccl@master%gcc
-    # - nccl%gcc
-    # - nccl-tests%gcc
+    # - aws-ofi-nccl@master
+    # - nccl
+    # - nccl-tests
 
     # Build + repo tools
-    - cmake@3.27                      %gcc
-    - git-lfs                         %gcc
-    - ninja                           %gcc
-    - direnv                          %gcc
-    - libtree                         %gcc
-    - llvm                            %gcc ~gold 
+    - cmake@3.27                      
+    - git-lfs                         
+    - ninja                           
+    - direnv                          
+    - libtree                         
+    - llvm                              
 
     # maths
-    - eigen                           %gcc
-    - fftw                            %gcc
-    - proj                            %gcc
-    - nvpl-blas                       %gcc threads=none
-    - nvpl-lapack                     %gcc threads=none
-    - blaspp                          %gcc ~openmp ~cuda
-    - openblas                        %gcc
-    - lapackpp                        %gcc
+    - eigen                           
+    - fftw                            
+    - proj                            
+    - nvpl-blas                        threads=none
+    - nvpl-lapack                      threads=none
+    - blaspp                           ~openmp ~cuda
+    - openblas                        
+    - lapackpp                        
 
     # CUDA/HIP support
-    - whip@main                       %gcc
+    - whip@main                       
 
     # c++ helpers
-    - fmt                             %gcc
-    - stdexec@git.b39a506096900de4074ee556867a3805bd8351bd=main %gcc
-    - boost                           %gcc +atomic +container +context +coroutine +json +multithreaded +program_options +serialization +shared +system +test +thread
+    - fmt                             
+    - stdexec@git.b39a506096900de4074ee556867a3805bd8351bd=main 
+    - boost                            +atomic +container +context +coroutine +json +multithreaded +program_options +serialization +shared +system +test +thread
 
     # IO and parallelism
-    - h5hut@master                    %gcc
-    - lz4                             %gcc
-    - libxml2                         %gcc
+    - h5hut@master                    
+    - lz4                             
+    - libxml2                         
 
     # memory management
-    - jemalloc                        %gcc
-    - mimalloc                        %gcc
+    - jemalloc                        
+    - mimalloc                        
 
     # profiling/testing
-    - gperftools                      %gcc
-    - googletest                      %gcc
+    - gperftools                      
+    - googletest                      
 
     # vtk external deps
-    - cgns@develop                    %gcc ~fortran 
-#    - seacas                          %gcc ~fortran ~applications ~legacy ~tests ~x11
-    - double-conversion@3.3.0         %gcc
-    - gl2ps                           %gcc
-    - glew                            %gcc
-    - jpeg                            %gcc
-    - jsoncpp                         %gcc
-    - libharu                         %gcc
-    - libtiff                         %gcc
-    - nlohmann-json                   %gcc
-    - libtheora@master                %gcc
-    - pugixml                         %gcc
-    - protobuf@:3.21                  %gcc # protobuf@3.4 - 3.21 to prevent abseil being pulled in @3.22:
-    - utf8cpp                         %gcc
+    - cgns@develop                     ~fortran 
+#    - seacas                           ~fortran ~applications ~legacy ~tests ~x11
+    - double-conversion@3.3.0         
+    - gl2ps                           
+    - glew                            
+    - jpeg                            
+    - jsoncpp                         
+    - libharu                         
+    - libtiff                         
+    - nlohmann-json                   
+    - libtheora@master                
+    - pugixml                         
+    - protobuf@:3.21                   # protobuf@3.4 - 3.21 to prevent abseil being pulled in @3.22:
+    - utf8cpp                         
 
     # ParaView python
-    - py-pandas                       %gcc
-    - py-matplotlib                   %gcc
-    - py-mpi4py                       %gcc
+    - py-pandas                       
+    - py-matplotlib                   
+    - py-mpi4py                       
 
     # The following are required to stop spack from using nvhpc to build
     # basic dependencies, some of which don't compile with nvc etc.
-    - autoconf                        %gcc
-    - automake                        %gcc
-    - ca-certificates-mozilla         %gcc
-    - diffutils                       %gcc
-    - gnuconfig                       %gcc
-    - libiconv                        %gcc
-    - libxcrypt                       %gcc
-    - m4                              %gcc
-    - ncurses                         %gcc
-    - openssl                         %gcc
-    - xz                              %gcc
-    - zlib                            %gcc
-    - zstd                            %gcc
-    - c-blosc                         %gcc
-    - libaec                          %gcc
-    - jasper                          %gcc
-    - patchelf                        %gcc
-    - gmake                           %gcc
+    # - autoconf                        
+    # - automake                        
+    # - ca-certificates-mozilla         
+    # - diffutils                       
+    # - gnuconfig                       
+    # - libiconv                        
+    # - libxcrypt                       
+    # - m4                              
+    # - ncurses                         
+    # - openssl                         
+    # - xz                              
+    # - zlib                            
+    # - zstd                            
+    # - c-blosc                         
+    # - libaec                          
+    # - jasper                          
+    # - patchelf                        
+    # - gmake                           
 
   variants:
     - build_type=Release
@@ -132,8 +134,10 @@ icon-dsl-paraview:
     - ~x11
     - ~examples
     - +fortran
+
   packages:
     - git
     - perl
+  
   views:
     default:
