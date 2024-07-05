@@ -11,11 +11,12 @@
 export PYTHONUNBUFFERED=1
 
 SRC=/users/biddisco/src
-CLUSTER=santis
+CLUSTER=todi
 ARCH=gh200
+DEVNAME=jb-dev-ompi
 
 STACKI_DIR=$SRC/alps-vcluster/stackinator
-RECIPE_DIR=$SRC/alps-vcluster/alps-spack-stacks/recipes/jb-dev/$ARCH
+RECIPE_DIR=$SRC/alps-vcluster/alps-spack-stacks/recipes/$DEVNAME/$ARCH
 SYSTEM_DIR=$SRC/alps-vcluster/alps-cluster-config/$CLUSTER
 BUILD_DIR=/dev/shm/biddisco
 
@@ -45,8 +46,8 @@ echo "# -----------------------------------------"
 echo "Copy generated squashfs file"
 DATE=$(date +%F)
 ls -al /dev/shm/biddisco/store.squashfs
-cp -f /dev/shm/biddisco/store.squashfs $SCRATCH/$CLUSTER-jbdev-$DATE.squashfs
-echo "Generated file should be $SCRATCH/$CLUSTER-jbdev-$DATE.squashfs"
+cp -f /dev/shm/biddisco/store.squashfs $SCRATCH/$CLUSTER-$DEVNAME-$DATE.squashfs
+echo "Generated file should be $SCRATCH/$CLUSTER-$DEVNAME-$DATE.squashfs"
 
 # -----------------------------------------
 # debug : create a shell using the spack setup used to create the squashfs
