@@ -1,5 +1,4 @@
 from spack import *
-from distutils.dir_util import copy_tree
 
 
 class FdbFortran(CMakePackage):
@@ -7,6 +6,7 @@ class FdbFortran(CMakePackage):
 
     homepage = 'https://github.com/MeteoSwiss/fdb-fortran'
     git = 'https://github.com/MeteoSwiss/fdb-fortran.git'
+    maintainers = ['victoria-cherkas']
 
     version('0.1.0', tag='0.1.0')
 

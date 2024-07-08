@@ -63,15 +63,10 @@ class Cosmo(MakefilePackage):
 
     # build dependency
     depends_on('perl@5.16.3:', type='build')
-    depends_on('boost', when='cosmo_target=gpu ~cppdycore', type='build')
     depends_on('libgrib1', type='build')
-    depends_on('omni-xmod-pool', when='+claw', type='build')
-    depends_on('claw', when='+claw', type='build')
 
     # build and link dependency
     depends_on('mpi +fortran')
-    depends_on('mpi +cuda', when='cosmo_target=gpu')
-    depends_on('cuda', when='cosmo_target=gpu')
     depends_on('netcdf-fortran')
     depends_on('netcdf-c +mpi')
     depends_on('jasper@1.900.1')
@@ -84,31 +79,8 @@ class Cosmo(MakefilePackage):
     depends_on('serialbox +fortran ^python@2:2.9',
                when='+serialize',
                type=('build', 'link', 'run'))
-    depends_on('zlib_ng +compat', when='+zlib_ng', type=('link', 'run'))
     depends_on('oasis', when='+oasis', type=('build', 'link', 'run'))
 
-    with when('+cppdycore'):
-        depends_on('cosmo-dycore', type='build')
-        depends_on('cosmo-dycore real_type=float',
-                   when='real_type=float',
-                   type='build')
-        depends_on('cosmo-dycore real_type=double',
-                   when='real_type=double',
-                   type='build')
-        depends_on('cosmo-dycore +cuda', when='cosmo_target=gpu', type='build')
-        depends_on('cosmo-dycore ~cuda', when='cosmo_target=cpu', type='build')
-        depends_on('cosmo-dycore +build_tests',
-                   when='+dycoretest',
-                   type='build')
-        depends_on('cosmo-dycore ~build_tests',
-                   when='~dycoretest',
-                   type='build')
-        depends_on('cosmo-dycore +gt1', when='+gt1', type='build')
-
-    variant('cppdycore', default=True, description='Build with the C++ DyCore')
-    variant('dycoretest',
-            default=False,
-            description='Build C++ dycore with testing')
     variant('serialize',
             default=False,
             description='Build with serialization enabled')
@@ -119,14 +91,8 @@ class Cosmo(MakefilePackage):
             description='Build with double or single precision enabled',
             values=('double', 'float'),
             multi=False)
-    variant('claw', default=False, description='Build with claw-compiler')
     variant('slave', default='none', description='Build on slave')
     variant('pollen', default=False, description='Build with pollen enabled')
-    variant('cosmo_target',
-            default='gpu',
-            description='Build with target gpu or cpu',
-            values=('gpu', 'cpu'),
-            multi=False)
     variant('verbose',
             default=False,
             description='Build cosmo with verbose enabled')
@@ -141,11 +107,6 @@ class Cosmo(MakefilePackage):
             description='Build with cuda_arch',
             values=('80', '70', '60', '37'),
             multi=False)
-    variant(
-        'zlib_ng',
-        default=False,
-        description=
-        'Run with faster zlib-implemention for compression of NetCDF output')
     variant('oasis',
             default=False,
             description='Build with the unified oasis interface')
@@ -155,11 +116,7 @@ class Cosmo(MakefilePackage):
         msg=
         "Please use only official versions listed with 'spack info cosmo'. Even when using 'devbuildcosmo'. C2SM introduced 'dev-build' to avoid name conflicts with the upstream instance. Since spack-c2sm v0.18.1.0 this is not relevant anymore."
     )
-    conflicts('+claw', when='cosmo_target=cpu')
     conflicts('+pollen', when='@org-master,master')
-    conflicts('cosmo_target=gpu', when='%gcc')
-    conflicts('+cppdycore', when='%nvhpc cosmo_target=cpu')
-    conflicts('+cppdycore', when='%pgi cosmo_target=cpu')
     # - ML - A conflict should be added there if the oasis variant is
     # chosen and the version is neither c2sm-features nor
     # dev-build. The problem is that this doesn't seem possible in a
@@ -212,7 +169,7 @@ class Cosmo(MakefilePackage):
             env.set(
                 'NETCDFL', '-L' + self.spec['netcdf-fortran'].prefix +
                 '/lib -lnetcdff -L' + self.spec['netcdf-c'].prefix +
-                '/lib64 -lnetcdf')
+                '/lib -lnetcdf')
             env.set('NETCDFI',
                     '-I' + self.spec['netcdf-fortran'].prefix + '/include')
 
@@ -234,33 +191,12 @@ class Cosmo(MakefilePackage):
 
         # MPI library
         if self.mpi_spec.name == 'openmpi':
-            env.set('MPIL', '-L' + self.mpi_spec.prefix + ' -lmpi_cxx')
+            env.set('MPIL', '-L' + self.mpi_spec.prefix + ' -lmpi')
 
         else:
             env.set('MPIL', '-L' + self.spec['mpi'].prefix + ' -lmpich')
 
         env.set('MPII', '-I' + self.mpi_spec.prefix + '/include')
-
-        # Dycoregt & Gridtools linrary
-        if '+cppdycore' in self.spec:
-            if '+gt1' in self.spec:
-                env.set('GRIDTOOLS_DIR', self.spec['gridtools'].prefix)
-                env.set('GRIDTOOLSL',
-                        '-L' + self.spec['gridtools'].prefix + '/lib -lgcl')
-                env.set(
-                    'GRIDTOOLSI', '-I' + self.spec['gridtools'].prefix +
-                    '/include/gridtools')
-            env.set('DYCOREGT', self.spec['cosmo-dycore'].prefix)
-            env.set('DYCOREGT_DIR', self.spec['cosmo-dycore'].prefix)
-            env.set(
-                'DYCOREGTL', '-L' + self.spec['cosmo-dycore'].prefix +
-                '/lib -ldycore_bindings_' +
-                self.spec.variants['real_type'].value +
-                ' -ldycore_base_bindings_' +
-                self.spec.variants['real_type'].value +
-                ' -ldycore -ldycore_base -ldycore_backend -lstdc++ -lcpp_bindgen_generator -lcpp_bindgen_handle -lgt_gcl_bindings'
-            )
-            env.set('DYCOREGTI', '-I' + self.spec['cosmo-dycore'].prefix)
 
         # Serialbox library
         if '+serialize' in self.spec:
@@ -269,26 +205,6 @@ class Cosmo(MakefilePackage):
                     self.spec['serialbox:fortran,c'].libs.ld_flags)
             env.set('SERIALBOXI',
                     '-I' + self.spec['serialbox'].prefix + '/include')
-
-        # Claw library
-        if '+claw' in self.spec:
-            claw_flags = ''
-            # Set special flags after CLAW release 2.1
-            if self.compiler.name in (
-                    'pgi',
-                    'nvhpc') and self.spec['claw'].version >= Version(2.1):
-                claw_flags += ' --fc-vendor=portland --fc-cmd=${FC}'
-            if 'cosmo_target=gpu' in self.spec:
-                claw_flags += ' --directive=openacc'
-            if self.spec.variants['verbose'].value:
-                claw_flags += ' -v'
-            env.set('CLAWDIR', self.spec['claw'].prefix)
-            env.set('CLAWFC', self.spec['claw'].prefix + '/bin/clawfc')
-            env.set('CLAWXMODSPOOL',
-                    self.spec['omni-xmod-pool'].prefix + '/omniXmodPool/')
-            if self.mpi_spec.name == 'mpich':
-                claw_flags += ' -D__CRAYXC'
-            env.set('CLAWFC_FLAGS', claw_flags)
 
         # OASIS library
         if '+oasis' in self.spec:
@@ -325,10 +241,6 @@ class Cosmo(MakefilePackage):
             build.append('COUP_OAS=1')
         if self.spec.variants['real_type'].value == 'float':
             build.append('SINGLEPRECISION=1')
-        if '+cppdycore' in self.spec:
-            build.append('CPP_GT_DYCORE=1')
-        if '+claw' in self.spec:
-            build.append('CLAW=1')
         if '+serialize' in self.spec:
             build.append('SERIALIZE=1')
         if self.spec.variants['verbose'].value:
@@ -357,7 +269,7 @@ class Cosmo(MakefilePackage):
                 OptionsFileName += '.pgi'
             elif self.compiler.name == 'cce':
                 OptionsFileName += '.cray'
-            OptionsFileName += '.' + spec.variants['cosmo_target'].value
+            OptionsFileName += '.cpu'
             OptionsFile = FileFilter(OptionsFileName)
 
             makefile = FileFilter('Makefile')
@@ -365,39 +277,24 @@ class Cosmo(MakefilePackage):
             if self.spec.version == Version('empa-ghg'):
                 if '~serialize' in spec:
                     makefile.filter(
-                        'TARGET     :=.*', 'TARGET     := {0}'.format(
-                            'cosmo-ghg_' +
-                            spec.variants['cosmo_target'].value))
+                        'TARGET     :=.*',
+                        'TARGET     := {0}'.format('cosmo-ghg_cpu'))
                 else:
                     makefile.filter('TARGET     :=.*',
                                     'TARGET     := {0}'.format('cosmo-ghg'))
             else:
                 if '~serialize' in spec:
-                    makefile.filter(
-                        'TARGET     :=.*', 'TARGET     := {0}'.format(
-                            'cosmo_' + spec.variants['cosmo_target'].value))
+                    makefile.filter('TARGET     :=.*',
+                                    'TARGET     := {0}'.format('cosmo_cpu'))
                 else:
                     makefile.filter('TARGET     :=.*',
                                     'TARGET     := {0}'.format('cosmo'))
 
-            if 'cosmo_target=gpu' in self.spec:
-                cuda_version = self.spec['cuda'].version
-                fflags = 'CUDA_HOME=' + self.spec[
-                    'cuda'].prefix + ' -ta=tesla,cc' + self.spec.variants[
-                        'cuda_arch'].value + ',cuda' + str(
-                            cuda_version.up_to(2))
-                OptionsFile.filter('FFLAGS   = -Kieee.*',
-                                   'FFLAGS   = -Kieee {0}'.format(fflags))
             # Pre-processor flags
             if self.mpi_spec.name == 'mpich':
                 OptionsFile.filter(
                     'PFLAGS   = -Mpreprocess.*',
                     'PFLAGS   = -Mpreprocess -DNO_MPI_HOST_DATA')
-            if 'cosmo_target=gpu' in self.spec and self.compiler.name in (
-                    'pgi', 'nvhpc'):
-                OptionsFile.filter(
-                    'PFLAGS   = -Mpreprocess.*',
-                    'PFLAGS   = -Mpreprocess -DNO_ACC_FINALIZE')
 
     def install(self, spec, prefix):
 
@@ -407,23 +304,14 @@ class Cosmo(MakefilePackage):
                 if '+serialize' in spec:
                     install('cosmo-ghg_serialize', prefix.bin)
                 else:
-                    install(
-                        'cosmo-ghg_' +
-                        self.spec.variants['cosmo_target'].value, prefix.bin)
-                    install(
-                        'cosmo-ghg_' +
-                        self.spec.variants['cosmo_target'].value,
-                        'test/testsuite')
+                    install('cosmo-ghg_cpu', prefix.bin)
+                    install('cosmo-ghg_cpu', 'test/testsuite')
             else:
                 if '+serialize' in spec:
                     install('cosmo_serialize', prefix.bin)
                 else:
-                    install(
-                        'cosmo_' + self.spec.variants['cosmo_target'].value,
-                        prefix.bin)
-                    install(
-                        'cosmo_' + self.spec.variants['cosmo_target'].value,
-                        'test/testsuite')
+                    install('cosmo_cpu', prefix.bin)
+                    install('cosmo_cpu', 'test/testsuite')
 
     @run_after('install')
     @on_package_attributes(run_tests=True)

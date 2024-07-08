@@ -24,9 +24,8 @@ class PyIcon4py(PythonPackage):
     maintainers = ['agopal', 'samkellerhals']
 
     version('main', branch='main', git=git)
-    version('0.0.3.1', tag='v0.0.3.1', git=git)
-    version('0.0.9', tag='v0.0.9', git=git)
     version('0.0.10', tag='v0.0.10', git=git)
+    version('0.0.11', tag='v0.0.11', git=git)
 
     depends_on('py-wheel', type='build')
     depends_on('py-setuptools', type='build')
@@ -73,6 +72,20 @@ class PyIcon4py(PythonPackage):
                 'liskov'  #utils will eventually map to parent directory of liskov
             },
             ver('=0.0.9'): {
+                'atm_dyn_iconam': 'dycore',
+                'tools': 'icon4pytools',
+                'diffusion': 'diffusion/stencils',
+                'interpolation': 'interpolation/stencils',
+                'advection': 'advection',
+            },
+            ver('=0.0.10'): {
+                'atm_dyn_iconam': 'dycore',
+                'tools': 'icon4pytools',
+                'diffusion': 'diffusion/stencils',
+                'interpolation': 'interpolation/stencils',
+                'advection': 'advection',
+            },
+            ver('=0.0.11'): {
                 'atm_dyn_iconam': 'dycore',
                 'tools': 'icon4pytools',
                 'diffusion': 'diffusion/stencils',
