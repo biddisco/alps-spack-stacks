@@ -28,7 +28,7 @@ class Ecrad(AutotoolsPackage):
     # FIXME: Add a proper url for your package's homepage here.
     homepage = "https://github.com/C2SM/libecrad.git"
     url = "https://github.com/C2SM/libecrad.git"
-    git = "/capstor/scratch/cscs/biddisco/libecrad"
+    git = "https://github.com/C2SM/libecrad.git"
 
     # FIXME: Add a list of GitHub accounts to
     # notify when the package is updated.
