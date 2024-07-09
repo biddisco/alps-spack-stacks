@@ -1,7 +1,5 @@
 packages:
   all:
-    prefer:
-    - '%gcc'
     providers:
       gl: [egl]
   egl:

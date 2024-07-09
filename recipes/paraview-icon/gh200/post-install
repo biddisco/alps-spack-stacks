@@ -33,47 +33,27 @@ SPACK_CMD="spack -C $CONFIG_PATH"
 debug_output "Debug: list all spack packages"
 $SPACK_CMD find -flv
 
-# -------------------------------------
-#debug_output "source spack setup"
-#SPACK_ROOT=$( $SPACK_CMD location -r )
-#source $SPACK_ROOT/share/spack/setup-env.sh
-
 # # -------------------------------------
-#  ATTEMPT TO USE BUILT IN STACKINATOR GENERATED ENVIRONMENT 
 debug_output "convert stackinator environment into a package"
-# this must be the name declared in environments.yaml
+PACKAGE_NAME=userenv
+mkdir $MOUNT_PATH/package_repo
+cd $MOUNT_PATH/package_repo
+# ENV_NAME must be the name declared in environments.yaml
 ENV_NAME=icon-dsl-paraview 
-python3 $HOME/store/meta/recipe/scripts/env-to-package.py $HOME/environments/$ENV_NAME/spack.yaml 
+python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/environments/$ENV_NAME/spack.yaml -p $PACKAGE_NAME
 # remove explicit gcc version as this causes a concretization error
-templocation=$( $SPACK_CMD location -p temppackage )
-echo "temppackge location is reported as " $templocation
-sed -i 's/%gcc//g' $templocation/package.py
-#sed -i '/nvhpc/d' $templocation/package.py
-# make a copy of the package.py file for possible user consumption
-mkdir $MOUNT_PATH/temppackage
-cp $templocation/package.py $MOUNT_PATH/temppackage/package.py
-
-
-# # -------------------------------------
-#  Original version that used to work pre-icon
-# python3 $HOME/store/meta/recipe/scripts/env-to-package.py $HOME/store/meta/recipe/environments.yaml 
-# # remove explicit gcc version as this causes a concretization error
-# templocation=$( $SPACK_CMD location -p temppackage )
-# echo "temppackge location is reported as " $templocation
-# sed -i 's/%gcc//g' $templocation/package.py
-# sed -i '/nvhpc/d' $templocation/package.py
-# # make a copy of the package.py file for possible user consumption
-# mkdir $MOUNT_PATH/temppackage
-# cp $templocation/package.py $MOUNT_PATH/temppackage/package.py
+sed -i 's/%gcc//g' ./packages/$PACKAGE_NAME/package.py
+#sed -i '/nvhpc/d' ./packages/$PACKAGE_NAME/package.py
+$SPACK_CMD repo add $MOUNT_PATH/package_repo
 
 # -------------------------------------
-debug_output "final temppackage contents"
-cat $MOUNT_PATH/temppackage/package.py
+debug_output "final $PACKAGE_NAME contents"
+cat $MOUNT_PATH/package_repo/packages/$PACKAGE_NAME/package.py
 
 # -------------------------------------
 debug_output "create build-env (gcc)"
 BUILD_ENV_GCC=$MOUNT_PATH/paraview-buildenv.rc
-SPEC="temppackage %gcc"
+SPEC="$PACKAGE_NAME %gcc"
 $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ env activate --sh
 $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ add $SPEC
 $SPACK_CMD -e $HOME/environments/icon-dsl-paraview/ concretize --reuse

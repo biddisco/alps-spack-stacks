@@ -6,20 +6,28 @@
 import yaml
 import sys
 import os
+import argparse
 
-packagename = "temppackage"
-packagenameU = packagename[0].upper() + packagename[1:]
+# read command line arguments
+parser = argparse.ArgumentParser()
+parser.add_argument("-f", "--filename", help="Path to the yaml file")
+parser.add_argument("-p", "--packagename", default="temppackage", help="Name of the package")
+args = parser.parse_args()
+
+# create a new directory called 'package'
+if not os.path.exists("packages"):
+    os.makedirs("packages")
+packagenameU = args.packagename[0].upper() + args.packagename[1:]
 
 # read the yaml file
-filename = sys.argv[1]
-with open(filename, 'r') as stream:
+with open(f'{args.filename}', 'r') as stream:
     try:
         env = yaml.safe_load(stream)
     except yaml.YAMLError as exc:
         print(exc)
 
 # change the following generation of the file to a string with the same contents
-output = f"# This file was auto-generated from {filename}\n"
+output = f"# This file was auto-generated from {args.filename}\n"
 output += "\n"
 output += "import itertools, os, sys\n"
 output += "from spack import *\n"
@@ -49,7 +57,7 @@ print(output)
 spack_package_root = os.popen('spack location -r').read().strip() + "/var/spack/repos/builtin/packages"
 
 # create a subdir named after the package if the subdir doesn't already exist
-tempdir = os.path.join(spack_package_root, packagename)
+tempdir = os.path.join("./packages", args.packagename)
 if not os.path.exists(tempdir):
     os.makedirs(tempdir)
 print('Writing temp package to ' + os.path.join(tempdir, 'package.py'))
@@ -61,13 +69,11 @@ with open(tempfile, 'w') as f:
     f.close()
     print(f"Temporary file {tempfile} has been created")
 
-print(f'spackgen {packagename} "{packagename} %gcc" --reuse')
+print(f'spackgen {args.packagename} "{args.packagename} %gcc" --reuse')
 
-
-# call spack to install the package - print error if it fails
-
-#os.system(f"spack info  {packagename}")
-#os.system(f'. /home/biddisco/opt/spack.git/share/spack/setup-env.sh ; /home/biddisco/src/_env/devenv/spackgen.sh temp "{packagename}%gcc" --reuse')
-
-# rewrite /home/biddisco/src/_env/bash/devenv/spackgen.sh as a python script
+with open('./repo.yaml', 'w') as f:
+    f.write(f"repo:\n")
+    f.write(f"  namespace: 'userenv'\n")
+    f.close()
+    print("Repo file has been created")
 

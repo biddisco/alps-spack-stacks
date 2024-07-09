@@ -1,40 +1,31 @@
 icon-dsl-paraview:
   compiler:
-    - toolchain: gcc
-      spec: gcc
-    - toolchain: llvm
-      spec: nvhpc
-  
-  unify: when_possible
-  
+      - toolchain: gcc
+        spec: gcc
+      - toolchain: llvm
+        spec: nvhpc
+  unify: true
   mpi:
-    spec: cray-mpich@8.1.30%nvhpc
-    gpu: cuda
+      spec: cray-mpich@8.1.29%nvhpc 
+      gpu: cuda
+
+  variants:
+  - build_type=Release
+  - +cuda
+  - cuda_arch=90
+  - +mpi
+  - ~x11
+  - ~examples
+  - +fortran
 
   packages:
-  - perl
   - curl
   - gmake
-  - autoconf
-  - automake
-  
-  variants:
-    - build_type=Release
-    - +cuda
-    - cuda_arch=90
-    - +mpi
-    - gl=egl
-    - ~x11
-    - ~examples
-    - +fortran
   
   views:
     default:
 
   specs:
-    # MPI 
-    - cray-mpich            %nvhpc
-
     # CUDA and python
     - cuda@12.3                       
     - python@3.10                     
@@ -43,13 +34,15 @@ icon-dsl-paraview:
     - hdf5                  %nvhpc +fortran +hl
     - libcatalyst@2.0.0     %nvhpc +fortran +mpi +python 
     # +conduit
+    - ecrad@git.31bf864f84d87219d87bbc558e0bc9fdda33df88=develop %nvhpc 
     - eccodes@2.34.0        %nvhpc +fortran +aec +tools +openmp +shared jp2k=jasper
-    - libcdi-pio@develop    %nvhpc +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads  grib2=eccodes
+    - libcdi-pio@develop    %nvhpc +fortran +mpi ~external-grib1+netcdf+shared~szip-grib1+threads grib2=eccodes ^eccodes+openmp
     - netcdf-fortran@4.6.1  %nvhpc ~doc+pic +shared
     - serialbox@2.6.1       %nvhpc +fortran +async-api+c~examples~ftg~ipo+logging~netcdf~python~sdb~shared+std-filesystem
     - yaxt@0.9.3.1          %nvhpc +fortran +shared
     - mtime@master          %nvhpc
     - rte-rrtmgp@autoconf   %nvhpc
+    # - yac                   %nvhpc
     
     # c2sm/icon dependencies that don't need fortran compilation, can use gcc
     - libfyaml@0.8          
@@ -68,7 +61,7 @@ icon-dsl-paraview:
     # - nccl-tests
 
     # Build + repo tools
-    - cmake@3.27                      
+    - cmake                      
     - git-lfs                         
     - ninja                           
     - direnv                          
@@ -108,7 +101,7 @@ icon-dsl-paraview:
 
     # vtk external deps
     - cgns@develop                     ~fortran 
-#    - seacas                           ~fortran ~applications ~legacy ~tests ~x11
+    - seacas                           ~fortran ~applications ~legacy ~tests ~x11
     - double-conversion@3.3.0         
     - gl2ps                           
     - glew                            
@@ -125,26 +118,5 @@ icon-dsl-paraview:
     # ParaView python
     - py-pandas                       
     - py-matplotlib                   
-    - py-mpi4py                       
-
-    # The following are required to stop spack from using nvhpc to build
-    # basic dependencies, some of which don't compile with nvc etc.
-    # - autoconf                        
-    # - automake                        
-    # - ca-certificates-mozilla         
-    # - diffutils                       
-    # - gnuconfig                       
-    # - libiconv                        
-    # - libxcrypt                       
-    # - m4                              
-    # - ncurses                         
-    # - openssl                         
-    # - xz                              
-    # - zlib                            
-    # - zstd                            
-    # - c-blosc                         
-    # - libaec                          
-    # - jasper                          
-    # - patchelf                        
-    # - gmake                           
-
+    - py-mpi4py
+    - py-numpy                       
