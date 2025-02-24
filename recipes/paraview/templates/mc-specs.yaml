@@ -1,0 +1,4 @@
+  # offscreen rendering
+  - mesa         +osmesa
+  - osmesa 
+  - glew 
