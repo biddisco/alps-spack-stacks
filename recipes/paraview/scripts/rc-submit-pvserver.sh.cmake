@@ -59,17 +59,17 @@ fi
 
 # ------------------------------------
 # Create a job script
-echo "#!/bin/bash -l"                              >> $TEMP_FILE
-echo "#SBATCH --job-name=$1"                       >> $TEMP_FILE
-echo "#SBATCH --time=$2"                           >> $TEMP_FILE
-echo "#SBATCH --nodes=$3"                          >> $TEMP_FILE
-echo "#SBATCH --ntasks-per-node=$4"                >> $TEMP_FILE
-echo "#SBATCH --ntasks=$nservers"                  >> $TEMP_FILE
-echo "#SBATCH --partition=$8"                      >> $TEMP_FILE
-echo "#SBATCH --account=${10}"                     >> $TEMP_FILE
-echo "#SBATCH --constraint=${CONSTRAINT}"          >> $TEMP_FILE
-echo "#SBATCH --uenv=${SQUASH_IMG}"                >> $TEMP_FILE
-echo "#SBATCH --cpus-per-task=$cpus_task"          >> $TEMP_FILE
+echo "#!/bin/bash -l"                                 >> $TEMP_FILE
+echo "#SBATCH --job-name=$1"                          >> $TEMP_FILE
+echo "#SBATCH --time=$2"                              >> $TEMP_FILE
+echo "#SBATCH --nodes=$3"                             >> $TEMP_FILE
+echo "#SBATCH --ntasks-per-node=$4"                   >> $TEMP_FILE
+echo "#SBATCH --ntasks=$nservers"                     >> $TEMP_FILE
+echo "#SBATCH --partition=$8"                         >> $TEMP_FILE
+echo "#SBATCH --account=${10}"                        >> $TEMP_FILE
+echo "#SBATCH --constraint=${CONSTRAINT}"             >> $TEMP_FILE
+echo "#SBATCH --uenv=${SQUASH_IMG}:/user-environment" >> $TEMP_FILE
+echo "#SBATCH --cpus-per-task=$cpus_task"             >> $TEMP_FILE
 
 # TODO: check these and replace with something generic
 echo "#SBATCH --ntasks-per-core=1"                 >> $TEMP_FILE
