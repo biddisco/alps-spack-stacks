@@ -59,11 +59,11 @@ cd $BUILD_DIR
 
 # -----------------------------------------"
 debug_output "make squashfs image"
-env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" http_proxy=$http_proxy https_proxy=$https_proxy no_proxy="$no_proxy" cluster=$CLUSTER make store.squashfs -j32
+stdbuf -o0 -e0 env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" http_proxy=$http_proxy https_proxy=$https_proxy no_proxy="$no_proxy" cluster=$CLUSTER make store.squashfs -j32
 
 # -----------------------------------------"
 debug_output "Force push anything that was built successfully"
-env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin make cache-force
+stdbuf -o0 -e0 env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin make cache-force
 
 # -----------------------------------------"
 debug_output "check generated squashfs file"
