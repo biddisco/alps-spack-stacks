@@ -36,6 +36,22 @@ def merge_sub_strings(data):
     return "\n".join(result)
 
 
+def architecture(cluster):
+    arch_dict = {
+        "balfrin": "gh200",
+        "bristen": "gh200",
+        "clariden": "gh200",
+        "daint": "gh200",
+        "eiger": "mc",
+        "oryx": "turing",
+        "pilatus": "gh200",
+        "santis": "gh200",
+        "tasna": "gh200",
+        "todi": "gh200",
+    }
+    return arch_dict[cluster]
+
+
 # -----------------------------------------------------------------------------
 def parse_arguments():
     script_path = os.path.dirname(os.path.abspath(__file__))
@@ -58,7 +74,6 @@ def parse_arguments():
         "-a",
         "--arch",
         type=str,
-        default="gh200",
         help="Architecture (gh200, mc...) for YAML template name",
     )
     parser.add_argument(
@@ -104,10 +119,10 @@ def main():
     #
     args = parse_arguments()
     mpi = args.mpi
-    arch = args.arch
+    cluster = args.cluster
+    arch = architecture(cluster)
     compiler = args.compiler
     recipe = args.recipe
-    cluster = args.cluster
     variant = args.variant
     out_path = os.path.abspath(args.output)
     template_path = os.path.abspath(args.template)
@@ -193,6 +208,27 @@ def main():
             output_file_path = os.path.join(output_path, filename)
             with open(output_file_path, "w") as file:
                 file.writelines(content)
+
+    symlinks = ["repo"]
+    for link in symlinks:
+        link_path = os.path.join(template_path, link)
+        if os.path.islink(link_path):
+            target_path = os.readlink(link_path)
+            output_symlink_path = os.path.join(output_path, link)
+            if os.path.exists(output_symlink_path):
+                print(f"Removing existing symlink {output_symlink_path}")
+                os.remove(output_symlink_path)
+            os.symlink(target_path, output_symlink_path, target_is_directory=True)
+            print(f"Created symlink {output_symlink_path} -> {target_path}")
+
+    if args.arch is not None and arch != args.arch:
+        print(
+            "*" * 50
+            + "\n"
+            + f"Warning: architecture {args.arch} is not supported on cluster {cluster}"
+            + "\n"
+            + "*" * 50
+        )
 
 
 # -----------------------------------------------------------------------------
