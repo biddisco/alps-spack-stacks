@@ -1,0 +1,10 @@
+  # CUDA
+  - cuda
+
+  # CUDA/HIP support
+  - whip@main
+
+  # linear algebra
+  - nvpl-blas                        threads=none
+  - nvpl-lapack                      threads=none
+  - openblas

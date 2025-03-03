@@ -1,0 +1,5 @@
+  - +cuda
+  - cuda_arch=89
+  - ~x11
+  - ^[virtuals=scalapack] intel-oneapi-mkl
+  - ^[virtuals=gl] egl
