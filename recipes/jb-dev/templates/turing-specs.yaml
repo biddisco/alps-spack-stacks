@@ -1,7 +1,0 @@
-  # CUDA
-  - cuda
-  - whip@main
-
-# Maths
-  - openblas
-  - intel-oneapi-mkl

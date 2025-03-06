@@ -1,0 +1,144 @@
+# Example use:
+# cd $SRC/alps-vcluster/alps-uenv/recipes/jb-dev
+# python ../generator/generate_recipe.py  -m ompi  -c gcc -C eiger -r jb-dev -t ./templates -o ./
+# python ../generator/generate_recipe.py  -m ompi  -c gcc -C oryx  -r jb-dev -t ./templates -o ./
+# python ../generator/generate_recipe.py  -m mpich -c gcc -C oryx  -r jb-dev -t ./templates -o ./
+
+${ENVNAME}:
+
+  views:
+    develop:
+      exclude: []
+      link: all
+      uenv:
+        add_compilers: true
+        prefix_paths:
+          LD_LIBRARY_PATH: [lib, lib64]
+
+  unify: true
+
+  compiler:
+    compiler=gcc:
+      - toolchain: gcc
+        spec: gcc@12
+    compiler=llvm:
+      - toolchain: llvm
+        spec: nvhpc
+    compiler=gcc+llvm:
+      - toolchain: gcc
+        spec: gcc@12
+      - toolchain: llvm
+        spec: nvhpc
+
+  mpi:
+    mpi=mpich:
+      cluster=eiger:
+        spec: cray-mpich@8.1.30
+        depends: [libfabric@main]
+      cluster=oryx:
+        spec: laptop-mpich
+        gpu: cuda
+      cluster=else:
+        spec: cray-mpich@8.1.30
+        gpu: cuda
+        depends: [libfabric@main]
+    mpi=ompi:
+      spec: openmpi@git.mpi-continue-5.0.6=main
+      xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
+      gpu: null
+      depends: ["libfabric@main"]
+
+  packages:
+  - git
+  - perl
+
+  specs:
+  # Build + repo tools
+  - cmake
+  - ninja
+  - git-lfs
+  - direnv
+  - libtree
+
+  # sys tools
+  - hwloc
+
+  # mpi tools
+  - osu-micro-benchmarks
+
+  # c++ helpers
+  - fmt@10
+  - stdexec@main
+  - boost            ~mpi +atomic +container +context +coroutine +json +multithreaded +program_options +serialization +shared +system +test +thread
+
+  # IO
+  - hdf5             +mpi +cxx +hl
+  - h5hut@master
+
+  # maths
+  - eigen
+  - fftw
+  - proj
+  - blaspp           ~openmp
+  - lapackpp
+
+  # allocators/memory management
+  - mimalloc         +skip_collect_on_exit
+  - umpire           ~shared ~mpi
+
+  # profiling/testing/logging
+  - papi
+  - gperftools
+  - googletest
+  - protobuf
+  - spdlog
+
+  - arch=gh200:
+    # CUDA/HIP support
+    - cuda
+    - whip@main
+
+    # Maths
+    - nvpl-blas      threads=none
+    - nvpl-lapack    threads=none
+    - openblas
+
+  - arch=zen2:
+    # Maths
+    - intel-oneapi-mkl
+
+  - arch=turing:
+    # CUDA
+    - cuda
+    - whip@main
+
+    # Maths
+    - openblas
+    - intel-oneapi-mkl
+
+  variants:
+  - build_type=Release
+  - cxxstd=17
+  - ~fortran
+  - ~examples
+  - ~tests
+  - ~testing
+  - +mpi
+  - +cxx
+  - +python
+
+  - arch=gh200:
+    - +cuda
+    - cuda_arch=90
+    - ~x11
+    - ^[virtuals=gl] egl
+
+  - arch=zen2:
+    - ~cuda
+    - ~x11
+
+  - arch=turing:
+    - +cuda
+    - cuda_arch=89
+    - ~x11
+    - ^[virtuals=gl] egl

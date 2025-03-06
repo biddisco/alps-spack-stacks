@@ -1,9 +1,0 @@
-variants:
-  - build_type=Release
-  - cxxstd=20
-  - ~fortran
-  - ~examples
-  - ~tests
-  - ~testing
-  - +mpi
-  - +cxx

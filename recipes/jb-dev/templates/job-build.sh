@@ -31,6 +31,7 @@ ARCH=${ARCH}
 VARIANT=${VARIANT}
 VERSION=5.13.2
 SPACK_ENV_NAME="${IMAGE}-${ARCH}-${VARIANT}-${VERSION}"
+SPACK_ENV_NAME=${ENVNAME}
 SRC=$HOME/src
 STACKI_DIR=$SRC/alps-vcluster/stackinator
 SYSTEM_DIR=$SRC/alps-vcluster/alps-cluster-config/${CLUSTER}

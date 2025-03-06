@@ -1,4 +1,0 @@
-  - +cuda
-  - cuda_arch=90
-  - ~x11
-  - ^[virtuals=gl] egl

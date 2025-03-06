@@ -1,3 +1,0 @@
-  - ~cuda
-  - ^[virtuals=scalapack] intel-oneapi-mkl
-  - ^[virtuals=gl] osmesa ^mesa +osmesa
