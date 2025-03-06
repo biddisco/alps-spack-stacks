@@ -1,8 +1,17 @@
 import yaml
 import yaml_include
 import os
-import sys
 import argparse
+
+# -----------------------------------------------------------------------------
+substitions = {
+    "compiler": "${COMPILER}",
+    "mpi": "${MPI}",
+    "arch": "${ARCH}",
+    "cluster": "${CLUSTER}",
+    "variant": "${VARIANT}",
+    "recipe": "${RECIPE}",
+}
 
 
 # -----------------------------------------------------------------------------
@@ -20,36 +29,87 @@ def substitute_vars(string):
 
 
 # -----------------------------------------------------------------------------
-def merge_sub_strings(data):
-    strings = data.split("\n")
-    result = []
-    unindent = False
-    for line in strings:
-        if "- - " in line:
-            unindent = True
-            line = line.replace("- - ", "- ")
-        elif "- " not in line:
-            unindent = False
-        elif unindent:
-            line = line.replace("  - ", "- ")
-        result.append(line)
-    return "\n".join(result)
+def clear_vars(string):
+    string = string.replace("-${ARCH}", "")
+    string = string.replace("-${COMPILER}", "")
+    string = string.replace("-${MPI}", "")
+    string = string.replace("-${ENVNAME}", "")
+    string = string.replace("-${CLUSTER}", "")
+    string = string.replace("-${VARIANT}", "")
+    string = string.replace("-${RECIPE}", "")
+    string = string.replace("-${GENERATED_DIR}", "")
+    return string
 
 
+# -----------------------------------------------------------------------------
+def check_key(key):
+    for name, val in substitions.items():
+        if key.startswith(f"{name}="):
+            if key == f"{name}={substitute_vars(val)}":
+                print(f"Substituting: {key:20} == {substitute_vars(val)}")
+                return substitute_vars(val)
+            elif key == f"{name}=else":
+                print(f"Substituting: {key:20} else")
+                return substitute_vars(val)
+            else:
+                print(f"Ignoring    : {key:20} != {substitute_vars(val)}")
+                return None
+    return key
+
+
+# -----------------------------------------------------------------------------
+def copy_recursive(data):
+    if isinstance(data, dict):
+        result = {}
+        for key, value in data.items():
+            test = check_key(key)
+            if test is None:
+                continue
+            if test is not None:
+                if test != key:
+                    if isinstance(value, dict):
+                        for k, v in value.items():
+                            result["unimplemented *********** " + k] = copy_recursive(v)
+                    if isinstance(value, list):
+                        return [copy_recursive(item) for item in value]
+                    else:
+                        return copy_recursive(value)
+                else:
+                    result[key] = copy_recursive(value)
+        return result if len(result) > 0 else None
+    elif isinstance(data, list):
+        result = []
+        for item in data:
+            new_item = copy_recursive(item)
+            if isinstance(new_item, list):
+                result.extend(new_item)
+            elif new_item is not None:
+                result.append(new_item)
+        return result
+    else:
+        return data
+
+
+# -----------------------------------------------------------------------------
 def architecture(cluster):
     arch_dict = {
         "balfrin": "gh200",
         "bristen": "gh200",
         "clariden": "gh200",
         "daint": "gh200",
-        "eiger": "mc",
+        "eiger": "zen2",
         "oryx": "turing",
         "pilatus": "gh200",
         "santis": "gh200",
         "tasna": "gh200",
         "todi": "gh200",
     }
-    return arch_dict[cluster]
+    try:
+        return arch_dict[cluster]
+    except KeyError:
+        raise ValueError(
+            f"Unknown cluster: {cluster}, please use one of {list(arch_dict.keys())}"
+        )
 
 
 # -----------------------------------------------------------------------------
@@ -95,7 +155,7 @@ def parse_arguments():
         "--recipe",
         type=str,
         default="test",
-        help="Recipe name (<recipe>.yaml in template dir)",
+        help="Recipe name",
     )
     parser.add_argument(
         "-v",
@@ -110,7 +170,54 @@ def parse_arguments():
     parser.add_argument(
         "-o", "--output", type=str, default=output_path, help="Output directory"
     )
+    parser.add_argument(
+        "-k",
+        "--keyvals",
+        type=str,
+        default="",
+        help="Comma separated key=value pairs for additional substitutions",
+    )
     return parser.parse_args()
+
+
+# -----------------------------------------------------------------------------
+def banner(title):
+    print()
+    print("#" * 50)
+    print(title)
+    print("#" * 50)
+
+
+# -----------------------------------------------------------------------------
+def perform_file_substitution(name, input_file, output_file):
+    # ------------------------------------------------
+    banner(f"{name:15}, Text ${{VARIABLE}} substitutions")
+    with open(input_file, "r") as file:
+        content = file.readlines()
+    content = [substitute_vars(line) for line in content]
+    content = "".join(content)
+
+    if not input_file.endswith(".yaml"):
+        with open(output_file, "w") as file:
+            file.write(content)
+
+    else:
+        # ------------------------------------------------
+        # convert yaml string into yaml dict
+        data = yaml.full_load(content)
+
+        # ------------------------------------------------
+        banner(f"{name:15}, Substitutions")
+        generated_yaml = copy_recursive(data)
+
+        # ------------------------------------------------
+        banner(f"{name:15}, Generated YAML")
+        print(yaml.dump(generated_yaml))
+
+        # ------------------------------------------------
+        # Write generated yaml to destination directory
+        with open(output_file, "w") as file:
+            yaml.dump(generated_yaml, file)
 
 
 # -----------------------------------------------------------------------------
@@ -133,102 +240,57 @@ def main():
     # add custom tag for includes in yaml loader
     yaml.add_constructor("!inc", yaml_include.Constructor(base_dir=template_path))
 
+    banner("Arguments/Variables")
     envname = f"{recipe}-{arch}-{compiler}-{mpi}"
-    print("\n")
-    print(f"arch={arch}")
-    print(f"compiler={compiler}")
-    print(f"mpi={mpi}")
-    print(f"recipe={recipe}")
-    print(f"envname={envname}")
-    print(f"cluster={cluster}")
-    print(f"variant={variant}")
-    print(f"template_dir={template_path}")
-    print(f"output_dir={output_path}")
-    print(f"generated_dir={generated_path}")
-    print("\n")
-    #
-    output_file = os.path.join(output_path, "environments.yaml")
+    print(f"envname         = {envname}")
+    print(f"recipe          = {recipe}")
+    print(f"arch            = {arch}")
+    print(f"compiler        = {compiler}")
+    print(f"mpi             = {mpi}")
+    print(f"cluster         = {cluster}")
+    print(f"variant         = {variant}")
+    print(f"template_dir    = {template_path}")
+    print(f"output_dir      = {output_path}")
+    print(f"generated_dir   = {generated_path}")
+    print(f"keyvals         = {args.keyvals}")
+
     # create output dir for arch
     if not os.path.exists(output_path):
         os.makedirs(output_path)
-    #
-    recipe_path = os.path.join(template_path, recipe + ".yaml")
-
-    # ------------------------------------------------
-    # load yaml as simple text and substitue all vars
-    with open(recipe_path, "r") as file:
-        content = file.readlines()
-    content = [substitute_vars(line) for line in content]
-    content = "".join(content)
-
-    # ------------------------------------------------
-    # load string as yaml with all !inc statements processed
-    data = yaml.full_load(content)
-
-    # ------------------------------------------------
-    # dump yaml back to a string
-    data_str = yaml.safe_dump(data, width=float("inf"))
-
-    # ------------------------------------------------
-    # merge keys that were suplicated (specs: for example)
-    data_str = merge_sub_strings(data_str)
-    print(data_str)
-
-    # ------------------------------------------------
-    # save the final yaml to the output file
-    with open(output_file, "w") as file:
-        file.write(data_str)
 
     #
-    filelist = [
-        "config.yaml",
+    template_filelist = [
         "cache-config.yaml",
-        f"{compiler}-compilers.yaml",
-        f"{arch}-packages.yaml",
+        "compilers.yaml",
+        "config.yaml",
+        "environments.yaml",
+        "packages.yaml",
         "post-install",
-        f"{arch}-post-install",
-        f"job-build.sh",
+        "post-install-${ARCH}",
+        "job-build.sh",
+        "job-build-${ARCH}.sh",
     ]
-    for filename in filelist:
+    symlinks = ["repo"]
+
+    for filename in template_filelist:
         file_path = os.path.join(template_path, filename)
         if os.path.exists(file_path):
-            with open(file_path, "r") as file:
-                content = file.readlines()
-            content = [substitute_vars(line) for line in content]
-
-            subst = [
-                "bootstrap.yaml",
-                "packages.yaml",
-                "compilers.yaml",
-                "post-install",
-            ]
-            for s in subst:
-                if filename.endswith(s):
-                    filename = s
             output_file_path = os.path.join(output_path, filename)
-            with open(output_file_path, "w") as file:
-                file.writelines(content)
+            perform_file_substitution(filename, file_path, output_file_path)
 
-    symlinks = ["repo"]
-    for link in symlinks:
-        link_path = os.path.join(template_path, link)
-        if os.path.islink(link_path):
-            target_path = os.readlink(link_path)
-            output_symlink_path = os.path.join(output_path, link)
+    for symlink in symlinks:
+        symlink_dest = os.path.join(template_path, f"../{symlink}")
+        if os.path.exists(symlink_dest):
+            output_symlink_path = os.path.join(output_path, symlink)
             if os.path.exists(output_symlink_path):
                 print(f"Removing existing symlink {output_symlink_path}")
                 os.remove(output_symlink_path)
-            os.symlink(target_path, output_symlink_path, target_is_directory=True)
-            print(f"Created symlink {output_symlink_path} -> {target_path}")
+            symlink_dest = os.path.relpath(symlink_dest, os.path.dirname(output_symlink_path))
+            os.symlink(symlink_dest, output_symlink_path, target_is_directory=os.path.isdir(symlink_dest))
+            print(f"Created symlink {output_symlink_path} -> {symlink_dest}")
 
     if args.arch is not None and arch != args.arch:
-        print(
-            "*" * 50
-            + "\n"
-            + f"Warning: architecture {args.arch} is not supported on cluster {cluster}"
-            + "\n"
-            + "*" * 50
-        )
+        banner(f"Warning: architecture {args.arch} is not supported on cluster {cluster}")
 
 
 # -----------------------------------------------------------------------------
