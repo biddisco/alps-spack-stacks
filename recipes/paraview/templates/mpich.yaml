@@ -1,3 +1,0 @@
-spec: cray-mpich@8.1.30
-gpu: cuda
-depends: [libfabric@main]

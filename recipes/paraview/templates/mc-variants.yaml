@@ -1,3 +1,0 @@
-  - ~cuda
-  - ^[virtuals=gl] osmesa ^mesa +osmesa
-

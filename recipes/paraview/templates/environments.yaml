@@ -19,10 +19,35 @@ ${ENVNAME}:
   unify: true
 
   compiler:
-    !inc ./${COMPILER}.yaml
+    compiler=gcc:
+      - toolchain: gcc
+        spec: gcc@12
+    compiler=llvm:
+      - toolchain: llvm
+        spec: nvhpc
+    compiler=gcc+llvm:
+      - toolchain: gcc
+        spec: gcc@12
+      - toolchain: llvm
+        spec: nvhpc
 
   mpi:
-    !inc ./${MPI}.yaml
+    mpi=mpich:
+      cluster=eiger:
+        spec: cray-mpich@8.1.30
+        depends: [libfabric@main]
+      cluster=oryx:
+        spec: laptop-mpich
+        gpu: cuda
+      cluster=else:
+        spec: cray-mpich@8.1.30
+        gpu: cuda
+        depends: [libfabric@main]
+    mpi=ompi:
+      spec: openmpi@git.mpi-continue-5.0.6=main
+      xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
+      gpu: null
+      depends: ["libfabric@main"]
 
   packages:
   - git
@@ -117,8 +142,34 @@ ${ENVNAME}:
   - py-mpi4py
   - py-cftime
   - py-h5py
-  - !inc ${ARCH}-specs.yaml
 
+  - arch=gh200:
+    # CUDA/HIP support
+    - cuda
+    - whip@main
+
+    # Maths
+    - nvpl-blas      threads=none
+    - nvpl-lapack    threads=none
+    - openblas
+
+  - arch=zen2:
+    # offscreen rendering
+    - mesa         +osmesa
+    - osmesa
+    - glew
+
+    # Maths
+    - intel-oneapi-mkl
+
+  - arch=turing:
+    # CUDA
+    - cuda
+    - whip@main
+
+    # Maths
+    - openblas
+    - intel-oneapi-mkl
 
   variants:
   - build_type=Release
@@ -130,4 +181,20 @@ ${ENVNAME}:
   - +mpi
   - +cxx
   - +python
-  - !inc ${ARCH}-variants.yaml
+
+  - arch=gh200:
+    - +cuda
+    - cuda_arch=90
+    - ~x11
+    - ^[virtuals=gl] egl
+
+  - arch=zen2:
+    - ~cuda
+    - ~x11
+    - ^[virtuals=gl] osmesa ^mesa +osmesa
+
+  - arch=turing:
+    - +cuda
+    - cuda_arch=89
+    - ~x11
+    - ^[virtuals=gl] egl

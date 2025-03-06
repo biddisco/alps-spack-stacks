@@ -1,0 +1,31 @@
+packages:
+  arch=gh200:
+    all:
+      providers:
+        gl: [egl]
+    egl:
+      externals:
+      - spec: egl@1.0.0
+        prefix: /usr
+      buildable: false
+    llvm:
+      require: llvm ~gold ~cuda
+
+  arch=turing:
+    all:
+      providers:
+        gl: [egl]
+    egl:
+      externals:
+      - spec: egl@1.0.0
+        prefix: /usr
+      buildable: false
+    llvm:
+      require: llvm ~gold ~cuda
+
+  arch=zen2:
+    all:
+      providers:
+        gl: [osmesa]
+    llvm:
+      require: llvm ~gold ~cuda
