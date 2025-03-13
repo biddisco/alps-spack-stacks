@@ -29,19 +29,6 @@ def substitute_vars(string):
 
 
 # -----------------------------------------------------------------------------
-def clear_vars(string):
-    string = string.replace("-${ARCH}", "")
-    string = string.replace("-${COMPILER}", "")
-    string = string.replace("-${MPI}", "")
-    string = string.replace("-${ENVNAME}", "")
-    string = string.replace("-${CLUSTER}", "")
-    string = string.replace("-${VARIANT}", "")
-    string = string.replace("-${RECIPE}", "")
-    string = string.replace("-${GENERATED_DIR}", "")
-    return string
-
-
-# -----------------------------------------------------------------------------
 def check_key(key):
     for name, val in substitions.items():
         if key.startswith(f"{name}="):
@@ -259,24 +246,27 @@ def main():
         os.makedirs(output_path)
 
     #
-    template_filelist = [
-        "cache-config.yaml",
-        "compilers.yaml",
-        "config.yaml",
-        "environments.yaml",
-        "packages.yaml",
-        "post-install",
-        "post-install-${ARCH}",
-        "job-build.sh",
-        "job-build-${ARCH}.sh",
-    ]
+    template_filelist = {
+        "cache-config.yaml": None,
+        "compilers.yaml": None,
+        "config.yaml": None,
+        "environments.yaml": None,
+        "modules.yaml": None,
+        "packages.yaml": None,
+        "post-install": None,
+        "post-install-${ARCH}": "post-install",
+        "job-build.sh": None,
+        "job-build-${ARCH}.sh": "job-build.sh",
+    }
     symlinks = ["repo"]
 
-    for filename in template_filelist:
-        file_path = os.path.join(template_path, filename)
+    for inname, outname in template_filelist.items():
+        file_path = os.path.join(template_path, substitute_vars(inname))
         if os.path.exists(file_path):
-            output_file_path = os.path.join(output_path, filename)
-            perform_file_substitution(filename, file_path, output_file_path)
+            output_file_path = os.path.join(
+                output_path, inname if outname is None else outname
+            )
+            perform_file_substitution(inname, file_path, output_file_path)
 
     for symlink in symlinks:
         symlink_dest = os.path.join(template_path, f"../{symlink}")
@@ -285,12 +275,20 @@ def main():
             if os.path.exists(output_symlink_path):
                 print(f"Removing existing symlink {output_symlink_path}")
                 os.remove(output_symlink_path)
-            symlink_dest = os.path.relpath(symlink_dest, os.path.dirname(output_symlink_path))
-            os.symlink(symlink_dest, output_symlink_path, target_is_directory=os.path.isdir(symlink_dest))
+            symlink_dest = os.path.relpath(
+                symlink_dest, os.path.dirname(output_symlink_path)
+            )
+            os.symlink(
+                symlink_dest,
+                output_symlink_path,
+                target_is_directory=os.path.isdir(symlink_dest),
+            )
             print(f"Created symlink {output_symlink_path} -> {symlink_dest}")
 
     if args.arch is not None and arch != args.arch:
-        banner(f"Warning: architecture {args.arch} is not supported on cluster {cluster}")
+        banner(
+            f"Warning: architecture {args.arch} is not supported on cluster {cluster}"
+        )
 
 
 # -----------------------------------------------------------------------------
