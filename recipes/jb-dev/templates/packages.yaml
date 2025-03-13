@@ -11,6 +11,11 @@ packages:
     llvm:
       require: llvm ~gold ~cuda
 
+    # continuations branch available from here
+    openmpi:
+      package_attributes:
+        git: https://github.com/biddisco/ompi
+
   arch=turing:
     all:
       providers:

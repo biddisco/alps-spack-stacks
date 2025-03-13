@@ -14,25 +14,19 @@ function debug_output() {
 
 # =====================================
 debug_output "post install hook"
-
-MOUNT_PATH={{ env.mount }}
-CONFIG_PATH={{ env.config }}
-HOME=$(pwd)
-echo running in   : $MOUNT_PATH
-echo HOME is      : $HOME
-echo config is in : $CONFIG_PATH
+mount_path={{ env.mount }}
+echo RUNNING IN $mount_path
+config_path={{ env.config }}
+echo config is in $config_path
 
 # =====================================
 debug_output "environment variables"
 printenv
 
 # =====================================
-debug_output "create post file {{ env.mount }}/post "
-echo "$(date)" > "$MOUNT_PATH/post"
-
-# =====================================
 debug_output "set vars we need frequently "
-SPACK_CMD="spack -C $CONFIG_PATH"
+HOME=$(pwd)
+SPACK_CMD="spack -C $config_path --debug"
 
 # =====================================
 debug_output "list all spack packages "
@@ -44,28 +38,24 @@ SPACK_ROOT=$( $SPACK_CMD location -r )
 source $SPACK_ROOT/share/spack/setup-env.sh
 
 # =====================================
-debug_output "convert stackinator environment into a package "
-python3 $HOME/store/meta/recipe/scripts/env-to-package.py $HOME/store/meta/recipe/environments.yaml
+debug_output "declare the name we are using for spack environment"
+# this name must match the one we are using from environments.yaml
+SPACK_ENV_NAME="${ENVNAME}"
+echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
 
-templocation=$( $SPACK_CMD location -p temppackage )
-echo "temppackge location is reported as " $templocation
-# make a copy of the package.py file for possible user consumption
-mkdir $MOUNT_PATH/temppackage
-cp $templocation/package.py $MOUNT_PATH/temppackage/package.py
+# =====================================
+debug_output "convert stackinator environment into a package "
+python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
+python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
 
 # =====================================
 debug_output "create build-env "
-BUILD_ENV=$MOUNT_PATH/buildenv.rc
-SPEC="temppackage %${COMPILER}"
-ENV_NAME=gcc-cuda
-$SPACK_CMD -e $HOME/environments/$ENV_NAME/ env activate --sh
-$SPACK_CMD -e $HOME/environments/$ENV_NAME/ add $SPEC
-$SPACK_CMD -e $HOME/environments/$ENV_NAME/ concretize
-$SPACK_CMD -e $HOME/environments/$ENV_NAME/ build-env --dump $BUILD_ENV "$SPEC"
-
-# =====================================
-debug_output "set permissions  "
-chmod -R a+r $BUILD_ENV
+BUILD_ENV=$mount_path/buildenv.rc
+SPEC="$SPACK_ENV_NAME %gcc@12"
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV "$SPEC"
 
 # =====================================
 debug_output "Done"
