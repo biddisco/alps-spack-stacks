@@ -60,7 +60,7 @@ ${ENVNAME}:
   - direnv
   - ninja
   - libtree
-  - llvm@18 ~gold ~cuda
+  - llvm ~gold ~cuda
 
   # sys tools
   - hwloc
@@ -128,7 +128,7 @@ ${ENVNAME}:
 
   # raytracing in VTK/ParaView
   - ospray@3.2 ~mpi +denoiser +volumes ~apps ~glm
-  - ispc@1.24
+  - ispc@1.23
   - openvkl
   - embree
   - rkcommon
