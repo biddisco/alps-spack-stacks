@@ -50,7 +50,7 @@ python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/re
 
 # =====================================
 debug_output "create build-env"
-BUILD_ENV_DEV=$mount_path/paraview-buildenv-dev.rc
+BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
 SPEC="$SPACK_ENV_NAME %gcc@12 ^[virtuals=gl] egl"
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
