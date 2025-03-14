@@ -258,7 +258,7 @@ def main():
         "job-build.sh": None,
         "job-build-${ARCH}.sh": "job-build.sh",
     }
-    symlinks = ["repo"]
+    symlinks = ["repo", "scripts"]
 
     for inname, outname in template_filelist.items():
         file_path = os.path.join(template_path, substitute_vars(inname))
