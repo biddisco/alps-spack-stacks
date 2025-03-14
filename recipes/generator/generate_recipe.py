@@ -45,28 +45,56 @@ def check_key(key):
 
 
 # -----------------------------------------------------------------------------
-def copy_recursive(data):
-    if isinstance(data, dict):
-        result = {}
-        for key, value in data.items():
-            test = check_key(key)
-            if test is None:
-                continue
-            if test is not None:
-                if test != key:
-                    if isinstance(value, dict):
-                        for k, v in value.items():
-                            result["unimplemented *********** " + k] = copy_recursive(v)
-                    if isinstance(value, list):
-                        return [copy_recursive(item) for item in value]
-                    else:
-                        return copy_recursive(value)
+def filter_items(data):
+    if isinstance(data,list):
+        return [item for item in (filter_items(item) for item in data) if item]
+
+    elif isinstance(data,dict):
+        new_dict = {}
+        sub = [] # list of keys that have been substituted
+        for k,v in data.items():
+            new_key = check_key(k)
+            if new_key is not None:
+                if new_key != k:
+                    if not k in sub: # only replace if not already done
+                        new_dict[k] = filter_items(v)
+                        sub.append(k)
                 else:
+                    new_dict[k] = filter_items(v)
+        return new_dict
+    else:
+        return data
+
+# -----------------------------------------------------------------------------
+def copy_recursive(data):
+    new_data = filter_items(data)
+    if isinstance(new_data, dict):
+        result = {}
+        for key, value in new_data.items():
+            newkey = check_key(key)
+            if newkey is None:
+                print("SERIOUS ERROR #1")
+                # drop this discarded value (eg wrong compiler/mpi/arch)
+                continue
+            else:
+                if newkey == key:
+                    # nothing changed, just copy through
                     result[key] = copy_recursive(value)
+                else:
+                    # substitution was made, we must copy all entries out of value and into this dict
+                    if isinstance(value, dict):
+                        new_value = copy_recursive(value)
+                        for k, v in new_value.items():
+                            if k not in result:
+                                result[k] = v
+                                print(f"result[{k}] = {result[k]}")
+
+                    elif isinstance(value, list):
+                        return [copy_recursive(v) for v in value]
         return result if len(result) > 0 else None
-    elif isinstance(data, list):
+    elif isinstance(new_data, list):
         result = []
-        for item in data:
+        for item in new_data:
             new_item = copy_recursive(item)
             if isinstance(new_item, list):
                 result.extend(new_item)
@@ -74,7 +102,7 @@ def copy_recursive(data):
                 result.append(new_item)
         return result
     else:
-        return data
+        return new_data
 
 
 # -----------------------------------------------------------------------------
@@ -192,6 +220,7 @@ def perform_file_substitution(name, input_file, output_file):
         # ------------------------------------------------
         # convert yaml string into yaml dict
         data = yaml.full_load(content)
+        # print(yaml.dump(data))
 
         # ------------------------------------------------
         banner(f"{name:15}, Substitutions")
