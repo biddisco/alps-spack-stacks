@@ -43,7 +43,7 @@ ${ENVNAME}:
         spec: laptop-mpich
         gpu: cuda
       cluster=else:
-        spec: cray-mpich@8.1.30
+        spec: cray-mpich@8.1.32
         gpu: cuda
         depends: [libfabric@main]
     mpi=ompi:
@@ -83,7 +83,7 @@ ${ENVNAME}:
   - eigen
   - fftw
   - proj
-  - blaspp           ~openmp
+  - blaspp
   - lapackpp
 
   # allocators/memory management
@@ -103,8 +103,9 @@ ${ENVNAME}:
     - whip@main
 
     # Maths
-    - nvpl-blas      threads=none
-    - nvpl-lapack    threads=none
+    - nvpl-blas
+    - nvpl-lapack
+    - nvpl-fft
     - openblas
 
   - arch=zen2:

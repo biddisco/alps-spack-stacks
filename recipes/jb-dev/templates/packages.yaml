@@ -1,46 +1,96 @@
 packages:
+
+  # common to all architectures (so far)
+  egl:
+    externals:
+    - spec: egl@1.0.0
+      prefix: /usr
+    buildable: false
+
+  llvm:
+    require: llvm ~gold ~cuda
+
+  hwloc:
+    variants:
+      - '~libxml2'
+
+  git:
+    # Force git as non-buildable to allow deprecated versions in environments
+    # https://github.com/spack/spack/pull/30040
+    buildable: false
+
+  openmpi:
+    # continuations branch available from here
+    package_attributes:
+      git: https://github.com/biddisco/ompi
+
+  # ------------------------------------------------------------
+  # GH200 specific settings
+  # ------------------------------------------------------------
   arch=gh200:
     all:
+      target: [neoverse_v2]
       providers:
         gl: [egl]
-    egl:
-      externals:
-      - spec: egl@1.0.0
-        prefix: /usr
-      buildable: false
-    llvm:
-      require: llvm ~gold ~cuda
 
-    # continuations branch available from here
-    openmpi:
-      package_attributes:
-        git: https://github.com/biddisco/ompi
+    # Set nvpl as default blas, lapack and scalapack provider.
+    # Can be overwritten in environments if needed.
+    blas:
+      require: 'nvpl-blas'
+    lapack:
+      require: 'nvpl-lapack'
+    scalapack:
+      require: 'netlib-scalapack'
 
-  arch=turing:
-    all:
-      providers:
-        gl: [egl]
-    egl:
-      externals:
-      - spec: egl@1.0.0
-        prefix: /usr
-      buildable: false
-    llvm:
-      require: llvm ~gold ~cuda
+    blaspp:
+      variants:
+        - '~cuda'
+        - '~openmp'
+        - '~rocm'
+    nvpl-blas:
+      require:
+        - 'threads=openmp'
+    nvpl-lapack:
+      require:
+        - 'threads=openmp'
+    openblas:
+      variants:
+        - 'threads=openmp'
 
-    # continuations branch available from here
-    openmpi:
-      package_attributes:
-        git: https://github.com/biddisco/ompi
-
+  # ------------------------------------------------------------
+  # eiger/zen2 specific settings
+  # ------------------------------------------------------------
   arch=zen2:
     all:
+      target: [x86_64]
       providers:
         gl: [osmesa]
-    llvm:
-      require: llvm ~gold ~cuda
 
-    # continuations branch available from here
-    openmpi:
-      package_attributes:
-        git: https://github.com/biddisco/ompi
+    # Set intel MKL as default blas, lapack and scalapack provider.
+    # Can be overwritten in environments if needed.
+    blas:
+      require: 'intel-oneapi-mkl'
+    lapack:
+      require: 'intel-oneapi-mkl'
+    scalapack:
+      require: 'intel-oneapi-mkl'
+    blaspp:
+      variants:
+        - '~cuda'
+        - '~openmp'
+        - '~rocm'
+    intel-oneapi-mkl:
+      require:
+        - 'threads=openmp'
+    openblas:
+      variants:
+        - 'threads=openmp'
+
+  # ------------------------------------------------------------
+  # turing specific settings
+  # ------------------------------------------------------------
+  arch=turing:
+    all:
+      target: [x86_64]
+      providers:
+        gl: [egl]
