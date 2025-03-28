@@ -24,6 +24,11 @@ packages:
     package_attributes:
       git: https://github.com/biddisco/ompi
 
+  libfabric:
+    # latest lnx work available from here
+    package_attributes:
+      git: https://github.com/amirshehataornl/libfabric
+
 
   # ------------------------------------------------------------
   # openblas?

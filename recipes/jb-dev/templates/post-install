@@ -52,7 +52,7 @@ python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/re
 # =====================================
 debug_output "create build-env "
 BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
-SPEC="$SPACK_ENV_NAME %gcc@12"
+SPEC="$SPACK_ENV_NAME %gcc@13"
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
@@ -66,7 +66,7 @@ cp $BUILD_ENV_DEV $BUILD_ENV
 rm $BUILD_ENV_DEV
 
 # remove /dev/shm paths from build-env that will not be available to the final user
-GCCLOC=$($SPACK_CMD location -i gcc@12%gcc@12)
+GCCLOC=$($SPACK_CMD location -i gcc@13%gcc@13)
 sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
 sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
 

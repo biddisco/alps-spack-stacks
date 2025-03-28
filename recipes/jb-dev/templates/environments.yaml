@@ -51,7 +51,7 @@ ${ENVNAME}:
       spec: openmpi@git.mpi-continue-5.0.6=main
       xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
       gpu: null
-      depends: ["libfabric@git.11163b6da4ceca95b4135d9c316d9ee9de91e63b=main fabrics=lnx,cxi,rxm,tcp,shm"]
+      depends: ["libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm"]
 
   packages:
   - git
@@ -137,7 +137,7 @@ ${ENVNAME}:
 
   - arch=gh200:
     - +cuda
-    - cuda_arch=90a
+    - cuda_arch=90
    # - +cuda_uvm
     - +wrapper
     - ~x11
