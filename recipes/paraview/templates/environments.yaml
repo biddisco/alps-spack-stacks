@@ -162,7 +162,7 @@ ${ENVNAME}:
     # Maths
     - intel-oneapi-mkl
 
-  - arch=turing:
+  - arch=ada:
     # CUDA
     - cuda
     - whip@main
@@ -193,7 +193,7 @@ ${ENVNAME}:
     - ~x11
     - ^[virtuals=gl] osmesa ^mesa +osmesa
 
-  - arch=turing:
+  - arch=ada:
     - +cuda
     - cuda_arch=89
     - ~x11

@@ -24,7 +24,7 @@ ${ENVNAME}:
   compiler:
     compiler=gcc:
       - toolchain: gcc
-        spec: gcc@12
+        spec: gcc@13
     compiler=llvm:
       - toolchain: llvm
         spec: nvhpc
@@ -38,6 +38,7 @@ ${ENVNAME}:
     mpi=mpich:
       cluster=eiger:
         spec: cray-mpich@8.1.30
+        gpu: null
         depends: [libfabric@main]
       cluster=oryx:
         spec: laptop-mpich
@@ -50,7 +51,7 @@ ${ENVNAME}:
       spec: openmpi@git.mpi-continue-5.0.6=main
       xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
       gpu: null
-      depends: ["libfabric@main"]
+      depends: ["libfabric@git.11163b6da4ceca95b4135d9c316d9ee9de91e63b=main fabrics=lnx,cxi,rxm,tcp,shm"]
 
   packages:
   - git
@@ -71,24 +72,26 @@ ${ENVNAME}:
   - osu-micro-benchmarks
 
   # c++ helpers
-  - fmt@10
-  - stdexec@main
-  - boost            ~mpi +atomic +container +context +coroutine +json +multithreaded +program_options +serialization +shared +system +test +thread
+  - fmt
+  - stdexec@24.09
+  - boost             ~mpi +atomic +chrono +container +context +coroutine +filesystem +iostreams +json +multithreaded +program_options +regex +serialization +shared +system +test +thread +timer
+  - kokkos
 
   # IO
-  - hdf5             +mpi +cxx +hl
+  - hdf5 +mpi +cxx +hl +szip +shared
   - h5hut@master
 
   # maths
   - eigen
   - fftw
   - proj
-  - blaspp
-  - lapackpp
+  - blaspp@2024.10.26
+  - lapackpp@2024.10.26
+  - heffte
 
   # allocators/memory management
   - mimalloc         +skip_collect_on_exit
-  - umpire           ~shared ~mpi
+  - umpire@2024.07.0 ~shared ~mpi
 
   # profiling/testing/logging
   - papi
@@ -106,24 +109,24 @@ ${ENVNAME}:
     - nvpl-blas
     - nvpl-lapack
     - nvpl-fft
-    - openblas
+    - gsl
 
   - arch=zen2:
     # Maths
     - intel-oneapi-mkl
+    - openblas
 
-  - arch=turing:
+  - arch=ada:
     # CUDA
     - cuda
     - whip@main
 
     # Maths
-    - openblas
     - intel-oneapi-mkl
 
   variants:
   - build_type=Release
-  - cxxstd=17
+  - cxxstd=20
   - ~fortran
   - ~examples
   - ~tests
@@ -134,7 +137,9 @@ ${ENVNAME}:
 
   - arch=gh200:
     - +cuda
-    - cuda_arch=90
+    - cuda_arch=90a
+   # - +cuda_uvm
+    - +wrapper
     - ~x11
     - ^[virtuals=gl] egl
 
@@ -142,8 +147,9 @@ ${ENVNAME}:
     - ~cuda
     - ~x11
 
-  - arch=turing:
+  - arch=ada:
     - +cuda
     - cuda_arch=89
+    - +wrapper
     - ~x11
     - ^[virtuals=gl] egl

@@ -73,6 +73,7 @@ unalias cp
 if [ -f "$BUILD_DIR/store.squashfs" ]; then
     echo "Copy generated file to $SQUASHFS_IMAGE_NAME"
     cp -f $BUILD_DIR/store.squashfs $SQUASHFS_IMAGE_NAME
+    chmod a+rx $SQUASHFS_IMAGE_NAME
 else
     echo "ERROR: $BUILD_DIR/store.squashfs does not exist"
 fi

@@ -113,7 +113,7 @@ def architecture(cluster):
         "clariden": "gh200",
         "daint": "gh200",
         "eiger": "zen2",
-        "oryx": "turing",
+        "oryx": "ada",
         "pilatus": "gh200",
         "santis": "gh200",
         "tasna": "gh200",

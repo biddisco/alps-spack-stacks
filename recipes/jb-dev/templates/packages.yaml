@@ -24,6 +24,21 @@ packages:
     package_attributes:
       git: https://github.com/biddisco/ompi
 
+
+  # ------------------------------------------------------------
+  # openblas?
+  # ------------------------------------------------------------
+  arch=rocco-uses-this:
+    blas:
+      require:
+      - openblas
+    lapack:
+      require:
+      - openblas
+    scalapack:
+      require:
+      - netlib-scalapack
+
   # ------------------------------------------------------------
   # GH200 specific settings
   # ------------------------------------------------------------
@@ -87,9 +102,9 @@ packages:
         - 'threads=openmp'
 
   # ------------------------------------------------------------
-  # turing specific settings
+  # ada specific settings
   # ------------------------------------------------------------
-  arch=turing:
+  arch=ada:
     all:
       target: [x86_64]
       providers:

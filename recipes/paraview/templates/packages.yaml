@@ -11,7 +11,7 @@ packages:
     llvm:
       require: llvm ~gold ~cuda
 
-  arch=turing:
+  arch=ada:
     all:
       providers:
         gl: [egl]

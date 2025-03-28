@@ -1,7 +1,7 @@
 name: ${ENVNAME}
 spack:
-  commit: a7b542dd37d264326c2d3e144cb7efaac6c4e580
-  repo: https://github.com/spack/spack.git
+  commit: ompi-daint
+  repo: https://github.com/biddisco/spack.git
 store: /user-environment
 description: JB-Dev environment
 modules: false
