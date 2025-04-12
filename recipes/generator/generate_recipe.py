@@ -1,5 +1,4 @@
 import yaml
-import yaml_include
 import os
 import argparse
 
@@ -252,9 +251,6 @@ def main():
     output_path = os.path.join(out_path, arch)
     # put the $HOME dir in the path that is written to the file
     generated_path = output_path.replace(os.path.expanduser("~"), "$HOME")
-
-    # add custom tag for includes in yaml loader
-    yaml.add_constructor("!inc", yaml_include.Constructor(base_dir=template_path))
 
     banner("Arguments/Variables")
     envname = f"{recipe}-{arch}-{compiler}-{mpi}"
