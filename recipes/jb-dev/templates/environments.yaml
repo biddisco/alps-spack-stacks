@@ -6,7 +6,9 @@
 # daint
 # python ../generator/generate_recipe.py -m mpich -c gcc -C daint -r jb-dev -t ./templates -o ./mpich
 # python ../generator/generate_recipe.py -m ompi  -c gcc -C daint -r jb-dev -t ./templates -o ./ompi
-
+#
+# copy to alps
+# /home/biddisco/src/alps-vcluster/upalps.sh
 
 ${ENVNAME}:
 
@@ -48,61 +50,104 @@ ${ENVNAME}:
         gpu: cuda
         depends: [libfabric@main]
     mpi=ompi:
+      # spec: openmpi@git.mpi-continue-5.0.6=main
+      # xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
       spec: openmpi@git.mpi-continue-5.0.6=main
-      xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-      gpu: null
-      depends: ["libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm"]
+      xspec: +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem # dev_path=/capstor/scratch/cscs/biddisco/src/ompi
+      gpu: cuda
+      depends:
+      - libfabric@git.lnx_refactor_main=main +debug fabrics=lnx,cxi,rxm,tcp,shm dev_path=/capstor/scratch/cscs/biddisco/src/libfabric
+      # - cxi-driver@main dev_path=/capstor/scratch/cscs/biddisco/src/cxi-driver
+      # - libcxi@main dev_path=/capstor/scratch/cscs/biddisco/src/libcxi
+      # - cassini-headers@main dev_path=/capstor/scratch/cscs/biddisco/src/cassini-headers
 
   packages:
   - git
   - perl
 
   specs:
+
+  # # ----------
+  # # main target
+  # # ----------
+  # - dla-future +cuda cxxstd=20 +miniapps +hdf5
+
+  # ----------
   # Build + repo tools
+  # ----------
   - cmake
   - ninja
   - git-lfs
   - direnv
   - libtree
 
+  # ----------
   # sys tools
+  # ----------
   - hwloc
 
+  # ----------
   # mpi tools
+  # ----------
   - osu-micro-benchmarks
 
+  # ----------
   # c++ helpers
+  # ----------
   - fmt
-  - stdexec@24.09
-  - boost             ~mpi +atomic +chrono +container +context +coroutine +filesystem +iostreams +json +multithreaded +program_options +regex +serialization +shared +system +test +thread +timer
-  - kokkos
+  - stdexec@git.nvhpc-25.03.rc1=main
+  - boost ~mpi +atomic +chrono +container +context +coroutine +filesystem +iostreams +json +multithreaded +program_options +regex +serialization +shared +system +test +thread +timer
 
-  # IO
+  # ----------
+  # runtime/framework
+  # ----------
+#  - kokkos
+
+  # ----------
+  # IO/files
+  # ----------
   - hdf5 +mpi +cxx +hl +szip +shared
-  - h5hut@master
+#  - h5hut@master
+  - nlohmann-json
 
+  # ----------
   # maths
-  - eigen
-  - fftw
-  - proj
+  # ----------
+#  - eigen
+#  - gsl
+#  - fftw
+#  - proj
   - blaspp@2024.10.26
   - lapackpp@2024.10.26
-  - heffte
+#  - heffte
 
+  # ----------
   # allocators/memory management
-  - mimalloc         +skip_collect_on_exit
-  - umpire@2024.07.0 ~shared ~mpi
+  # ----------
+  - mimalloc   +skip_collect_on_exit
+  - umpire     ~shared ~mpi
 
+  # debugging
+  - gdb
+ # - xterm
+
+  # ----------
   # profiling/testing/logging
-  - papi
+  # ----------
+  # - papi
   - gperftools
   - googletest
   - protobuf
   - spdlog
 
+  # ----------
+  # unwanted: fixed versions to solve spack build errors
+  # ----------
+  - libxml2 ~python
+
   - arch=gh200:
     # CUDA/HIP support
-    - cuda
+    - cuda@12.8
     - whip@main
 
     # Maths

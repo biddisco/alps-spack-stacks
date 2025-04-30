@@ -1,12 +1,12 @@
 #!/bin/bash
 
 #SBATCH --job-name=uenv-prepare
-#SBATCH --time=04:00:00
+#SBATCH --time=02:30:00
 #SBATCH --nodes=1
 #SBATCH --partition=normal
 #SBATCH --account=csstaff
-#SBATCH --output=/users/biddisco/stackinator-output.%j.txt
-#SBATCH --error=/users/biddisco/stackinator-error.%j.txt
+#SBATCH --output=/users/biddisco/${CLUSTER}-stackinator-output.%j.txt
+#SBATCH --error=/users/biddisco/${CLUSTER}-stackinator-error.%j.txt
 
 # -------------------------------------
 function debug_output() {

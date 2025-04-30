@@ -46,8 +46,12 @@ echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
 
 # =====================================
 debug_output "convert stackinator environment into a package "
-python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
-python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
+python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
+python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
+
+# =====================================
+debug_output "copy environment "
+cp -r $HOME/environments/$SPACK_ENV_NAME $mount_path
 
 # =====================================
 debug_output "create build-env "
