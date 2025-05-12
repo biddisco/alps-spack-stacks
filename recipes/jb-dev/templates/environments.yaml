@@ -70,7 +70,8 @@ ${ENVNAME}:
   # # ----------
   # # main target
   # # ----------
-  # - dla-future +cuda cxxstd=20 +miniapps +hdf5
+  - pika@main +mpi +stdexec cxxstd==20
+  - dla-future@master +cuda cxxstd==20 +miniapps +hdf5
 
   # ----------
   # Build + repo tools
@@ -101,25 +102,25 @@ ${ENVNAME}:
   # ----------
   # runtime/framework
   # ----------
-#  - kokkos
+  - kokkos +cuda +openmp +serial
 
   # ----------
   # IO/files
   # ----------
   - hdf5 +mpi +cxx +hl +szip +shared
-#  - h5hut@master
+  - h5hut@master
   - nlohmann-json
 
   # ----------
   # maths
   # ----------
+  - gsl
+  - fftw
+  - heffte@git.9eab7c0eb18e86acaccc2b5699b30e85a9e7bdda=2.4.1 +cuda
 #  - eigen
-#  - gsl
-#  - fftw
 #  - proj
   - blaspp@2024.10.26
   - lapackpp@2024.10.26
-#  - heffte
 
   # ----------
   # allocators/memory management
@@ -147,7 +148,7 @@ ${ENVNAME}:
 
   - arch=gh200:
     # CUDA/HIP support
-    - cuda@12.8
+    - cuda@12.1
     - whip@main
 
     # Maths

@@ -283,7 +283,11 @@ def main():
         "job-build.sh": None,
         "job-build-${ARCH}.sh": "job-build.sh",
     }
-    symlinks = ["repo", "scripts"]
+    symlinks = [
+        item for item in os.listdir(template_path)
+        if os.path.islink(os.path.join(template_path, item))
+    ]
+    print("symlinks found", symlinks)
 
     for inname, outname in template_filelist.items():
         file_path = os.path.join(template_path, substitute_vars(inname))
@@ -294,7 +298,7 @@ def main():
             perform_file_substitution(inname, file_path, output_file_path)
 
     for symlink in symlinks:
-        symlink_dest = os.path.join(template_path, f"../{symlink}")
+        symlink_dest = os.path.join(template_path, symlink)
         if os.path.exists(symlink_dest):
             output_symlink_path = os.path.join(output_path, symlink)
             if os.path.exists(output_symlink_path):
