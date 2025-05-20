@@ -52,14 +52,15 @@ ${ENVNAME}:
     mpi=ompi:
       # spec: openmpi@git.mpi-continue-5.0.6=main
       # xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-      spec: openmpi@git.mpi-continue-5.0.6=main
+      spec: openmpi@git.6136894031e60ba39a5da81fbfa57ea4430ae055=main
       xspec: +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem # dev_path=/capstor/scratch/cscs/biddisco/src/ompi
       gpu: cuda
       depends:
-      - libfabric@git.lnx_refactor_main=main +debug fabrics=lnx,cxi,rxm,tcp,shm dev_path=/capstor/scratch/cscs/biddisco/src/libfabric
-      # - cxi-driver@main dev_path=/capstor/scratch/cscs/biddisco/src/cxi-driver
-      # - libcxi@main dev_path=/capstor/scratch/cscs/biddisco/src/libcxi
-      # - cassini-headers@main dev_path=/capstor/scratch/cscs/biddisco/src/cassini-headers
+      # latest commit 2ae8891e5bb0e2d4747c2a5a16a9f757c5d08095 (HEAD -> lnx_refactor_main, amir/lnx_refactor_main)
+      - libfabric@git.2ae8891e5bb0e2d4747c2a5a16a9f757c5d08095=main fabrics=lnx,cxi,rxm,tcp,shm # dev_path=/capstor/scratch/cscs/biddisco/src/libfabric
+      - cxi-driver@main      # dev_path=/capstor/scratch/cscs/biddisco/src/cxi-driver
+      - libcxi@main          # dev_path=/capstor/scratch/cscs/biddisco/src/libcxi
+      - cassini-headers@main # dev_path=/capstor/scratch/cscs/biddisco/src/cassini-headers
 
   packages:
   - git
@@ -71,7 +72,7 @@ ${ENVNAME}:
   # # main target
   # # ----------
   - pika@main +mpi +stdexec cxxstd==20
-  - dla-future@master +cuda cxxstd==20 +miniapps +hdf5
+  - dla-future@master cxxstd==20 +miniapps +hdf5
 
   # ----------
   # Build + repo tools
@@ -102,7 +103,7 @@ ${ENVNAME}:
   # ----------
   # runtime/framework
   # ----------
-  - kokkos +cuda +openmp +serial
+  - kokkos +openmp +serial
 
   # ----------
   # IO/files
@@ -116,7 +117,7 @@ ${ENVNAME}:
   # ----------
   - gsl
   - fftw
-  - heffte@git.9eab7c0eb18e86acaccc2b5699b30e85a9e7bdda=2.4.1 +cuda
+  - heffte@git.9eab7c0eb18e86acaccc2b5699b30e85a9e7bdda=2.4.1
 #  - eigen
 #  - proj
   - blaspp@2024.10.26
