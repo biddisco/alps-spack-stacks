@@ -68,8 +68,8 @@ BUILD_ROOT=$mount_path/temp/build
 SCRATCH=/capstor/scratch/cscs/biddisco
 
 # setup paths for src/build/install
-PARAVIEW_VERSION_MAIN=5.13
-PARAVIEW_VERSION_FULL=5.13.2
+PARAVIEW_VERSION_MAIN=6.0
+PARAVIEW_VERSION_FULL=6.0.0-RC1
 PARAVIEW_SRC_DIR=$SRC_ROOT/ParaView-v${PARAVIEW_VERSION_FULL}
 PARAVIEW_BINARY_DIR=$BUILD_ROOT/paraview
 PARAVIEW_INSTALL_DIR=$mount_path/ParaView-$PARAVIEW_VERSION_MAIN
@@ -81,23 +81,26 @@ mkdir -p $PARAVIEW_INSTALL_DIR
 mkdir -p $PARAVIEW_PLUGINS_DIR
 
 cd $SRC_ROOT
+# because 6.0.0 tarball does not exist yet - and we can set a custom vtk branch
+CLONE_PARAVIEW=true
 if [[ $CLONE_PARAVIEW == "true" ]]; then
     # clone paraview
     debug_output "clone paraview"
-    git clone https://gitlab.kitware.com/paraview/paraview.git $PARAVIEW_SRC_DIR
+    git clone --depth 1 https://gitlab.kitware.com/paraview/paraview.git $PARAVIEW_SRC_DIR
     cd $PARAVIEW_SRC_DIR
-    git submodule update --init --recursive
+    git submodule update --init --recursive --depth 1
+    git fetch --tags
     git checkout v${PARAVIEW_VERSION_FULL}
 
     # =====================================
-    debug_output "change to master branch of VTK"
+    debug_output "change VTK for h5part fix"
     cd $PARAVIEW_SRC_DIR/VTK
-    git submodule update
-
-    # =====================================
-    debug_output "change to 2.1.0 branch of vtk-m"
-    cd $PARAVIEW_SRC_DIR/VTK/ThirdParty/vtkm/vtkvtkm/vtk-m
-    git checkout v2.1.0
+    git submodule update --depth 1
+    git remote add github https://github.com/biddisco/VTK.git
+    git fetch github --tags
+    # we need 2 commit from the h5part fix branch
+    git cherry-pick github/fix-h5part-parallel-PV~
+    git cherry-pick github/fix-h5part-parallel-PV
 else
     wget https://www.paraview.org/files/v${PARAVIEW_VERSION_MAIN}/ParaView-v${PARAVIEW_VERSION_FULL}.tar.xz
     # cp $SCRATCH/uenv-data/ParaView-v${PARAVIEW_VERSION_FULL}.tar.xz .
@@ -106,10 +109,12 @@ fi
 
 # =====================================
 debug_output "download + extract nvidia index libs"
+cd $PARAVIEW_PLUGINS_DIR
 NVINDEX_FILENAME=nvidia-index-libs-5.12.0.20231121-linux
+NVINDEX_FILENAME=nvidia-index-libs-6.0.0.20250409-linux-aarch64
 NVINDEX_TARBALL=${NVINDEX_FILENAME}.tar.bz2
-curl -L "https://jfrog.svc.cscs.ch/artifactory/paraview/$NVINDEX_TARBALL" -o $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
-# wget https://www.paraview.org/files/dependencies/$NVINDEX_TARBALL -o $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
+# curl -L "https://jfrog.svc.cscs.ch/artifactory/paraview/$NVINDEX_TARBALL" -o $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
+wget -q https://www.paraview.org/files/dependencies/$NVINDEX_TARBALL
 tar --directory $PARAVIEW_PLUGINS_DIR -xf $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
 
 # =====================================
@@ -135,7 +140,7 @@ cmake -G Ninja \
     -DPARAVIEW_USE_CUDA=ON                                  \
     -DCMAKE_CUDA_ARCHITECTURES=90                           \
     `# VTM-m`                                               \
-    -DPARAVIEW_USE_VTKM=ON                                  \
+    -DPARAVIEW_USE_VISKORES=ON                              \
     `# NVidia index`                                        \
     -DPARAVIEW_PLUGIN_ENABLE_pvNVIDIAIndeX=ON               \
     -DPARAVIEW_PLUGIN_AUTOLOAD_pvNVIDIAIndeX=OFF            \
@@ -157,6 +162,7 @@ cmake -G Ninja \
     -DVTK_MODULE_USE_EXTERNAL_VTK_cgns=OFF                  \
     -DVTK_MODULE_USE_EXTERNAL_VTK_pegtl=OFF                 \
     -DVTK_MODULE_USE_EXTERNAL_VTK_ioss=OFF                  \
+    -DVTK_MODULE_USE_EXTERNAL_VTK_vtkviskores=OFF           \
     `# raytracing `                                         \
     -DPARAVIEW_ENABLE_RAYTRACING:BOOL=ON                    \
     -DVTKOSPRAY_ENABLE_DENOISER:BOOL=ON                     \

@@ -105,6 +105,10 @@ echo "# adding plugin paths"                                                    
 echo "export NVINDEX_PVPLUGIN_HOME=${PARAVIEW_PLUGINS_DIR}"                     >> $TEMP_FILE
 echo "export LD_LIBRARY_PATH=$PV_LIBRARY_PATH:\$LD_LIBRARY_PATH"                >> $TEMP_FILE
 echo "export PV_PLUGIN_PATH=$PARAVIEW_PLUGINS_DIR:$PARAVIEW_PLUGINS_DIR/lib64"  >> $TEMP_FILE
+# We want to force EGL rendering on daint
+echo "#export VTK_DEFAULT_OPENGL_WINDOW=vtkOSOpenGLRenderWindow"                >> $TEMP_FILE
+echo "#export VTK_DEFAULT_OPENGL_WINDOW=vtkXOpenGLRenderWindow"                 >> $TEMP_FILE
+echo "#export VTK_DEFAULT_OPENGL_WINDOW=vtkEGLRenderWindow"                      >> $TEMP_FILE
 
 echo "" >> $TEMP_FILE
 echo "srun -n $nservers -N $3 --cpu_bind=sockets $GPU_WRAPPER $PV_SERVER --reverse-connection --client-host=$HOST_NAME --server-port=$5" >> $TEMP_FILE
