@@ -144,6 +144,7 @@ cmake -G Ninja \
     -DPARAVIEW_PLUGIN_ENABLE_NetCDFTimeAnnotationPlugin=ON  \
     -DPARAVIEW_ENABLE_FIDES:BOOL=ON                         \
     -DPARAVIEW_ENABLE_VISITBRIDGE:BOOL=ON                   \
+    -DPARAVIEW_ENABLE_OPENVDB=ON                            \
     `# use external libraries wherever possible`            \
     -DPARAVIEW_BUILD_WITH_EXTERNAL=ON                       \
     `# These externals had compilation problems`            \
