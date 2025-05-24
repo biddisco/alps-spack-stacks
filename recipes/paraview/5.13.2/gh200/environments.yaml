@@ -92,7 +92,7 @@ paraview-cuda:
   - protobuf@:3.21
   - seacas ~fortran ~applications ~legacy ~tests ~x11
   - utf8cpp
-  - openvdb
+  - openvdb@git.67964d1e15f5aaeaffe56751f54d8fc5a5d4bed1=develop
 
   # climate/weather
   - cdi

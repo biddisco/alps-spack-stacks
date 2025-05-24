@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set +e
+
 # -------------------------------------
 # we output messages to stdout and also stderr to simplify debugging since logs are usually in
 # separate files and we want to see where errors are happening in the script
@@ -114,6 +116,9 @@ tar --directory $PARAVIEW_PLUGINS_DIR -xf $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
 # =====================================
 debug_output "run cmake on paraview"
 mkdir -p $PARAVIEW_BINARY_DIR && cd $PARAVIEW_BINARY_DIR
+OPENVDB_DIR=$($SPACK_CMD location -i openvdb)
+OpenVDB_INCLUDE_DIR=$OPENVDB_DIR/include
+OpenVDB_LIBRARY=$OPENVDB_DIR/lib64/libopenvdb.so
 
 cmake -G Ninja \
     -DCMAKE_INSTALL_PREFIX=$PARAVIEW_INSTALL_DIR            \
@@ -145,6 +150,10 @@ cmake -G Ninja \
     -DPARAVIEW_ENABLE_FIDES:BOOL=ON                         \
     -DPARAVIEW_ENABLE_VISITBRIDGE:BOOL=ON                   \
     -DPARAVIEW_ENABLE_OPENVDB=ON                            \
+    -DOpenVDB_ROOT=$OPENVDB_DIR                             \
+    -DOpenVDB_DIR=$OPENVDB_DIR                              \
+    -DOpenVDB_INCLUDE_DIR=$OPENVDB_DIR/include              \
+    -DOpenVDB_LIBRARY=$OPENVDB_DIR/lib64/libopenvdb.so      \
     `# use external libraries wherever possible`            \
     -DPARAVIEW_BUILD_WITH_EXTERNAL=ON                       \
     `# These externals had compilation problems`            \
@@ -192,7 +201,7 @@ rm $BUILD_ENV_DEV
 sed -i "s|^CMAKE_PREFIX_PATH=|CMAKE_PREFIX_PATH=$PARAVIEW_INSTALL_DIR:|g" $BUILD_ENV
 
 # remove /dev/shm paths from build-env that will not be available to the final user
-GCCLOC=$($SPACK_CMD location -i gcc@12)
+GCCLOC=$($SPACK_CMD location -i gcc@12 +bootstrap)
 sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
 sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
 
