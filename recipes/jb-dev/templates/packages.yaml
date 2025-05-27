@@ -20,13 +20,13 @@ packages:
     buildable: false
 
   openmpi:
-    # continuations branch available from here
+    # continuations branch available from here : https://github.com/biddisco/ompi
     package_attributes:
-      git: https://github.com/open-mpi/ompi.git
-      # https://github.com/biddisco/ompi
+#      git: https://github.com/open-mpi/ompi.git
+       https://github.com/biddisco/ompi
 
   libfabric:
-    # latest lnx work available from here
+    # latest lnx work available from here : https://github.com/amirshehataornl/libfabric
     package_attributes:
       git: https://github.com/amirshehataornl/libfabric
 

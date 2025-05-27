@@ -52,15 +52,14 @@ ${ENVNAME}:
     mpi=ompi:
       # spec: openmpi@git.mpi-continue-5.0.6=main
       # xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-      spec: openmpi@git.6136894031e60ba39a5da81fbfa57ea4430ae055=main
-      xspec: +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem # dev_path=/capstor/scratch/cscs/biddisco/src/ompi
+      spec: openmpi@git.e4571509bf942a9f55b4e91fec1c62cf391fba6b=main
+      xspec: +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
       gpu: cuda
       depends:
-      # latest commit 2ae8891e5bb0e2d4747c2a5a16a9f757c5d08095 (HEAD -> lnx_refactor_main, amir/lnx_refactor_main)
-      - libfabric@git.2ae8891e5bb0e2d4747c2a5a16a9f757c5d08095=main fabrics=lnx,cxi,rxm,tcp,shm # dev_path=/capstor/scratch/cscs/biddisco/src/libfabric
-      - cxi-driver@main      # dev_path=/capstor/scratch/cscs/biddisco/src/cxi-driver
-      - libcxi@main          # dev_path=/capstor/scratch/cscs/biddisco/src/libcxi
-      - cassini-headers@main # dev_path=/capstor/scratch/cscs/biddisco/src/cassini-headers
+      - libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm
+      - cxi-driver@main
+      - libcxi@main
+      - cassini-headers@main
 
   packages:
   - git
