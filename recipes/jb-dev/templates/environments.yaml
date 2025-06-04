@@ -63,8 +63,8 @@ ${ENVNAME}:
         # ~debug dev_path=/capstor/scratch/cscs/biddisco/src/openmpi
       gpu: cuda
       depends:
-      - libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm
-        # ~debug dev_path=/capstor/scratch/cscs/biddisco/src/libfabric
+      - libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm dev_path=/capstor/scratch/cscs/biddisco/src/libfabric
+        # ~debug
       - cxi-driver@main dev_path=/capstor/scratch/cscs/biddisco/src/cxi-driver
       - libcxi@main dev_path=/capstor/scratch/cscs/biddisco/src/libcxi
       - cassini-headers@main dev_path=/capstor/scratch/cscs/biddisco/src/cassini-headers
@@ -74,6 +74,9 @@ ${ENVNAME}:
   - perl
 
   specs:
+
+  # - pika@main
+  # - dla-future@master
 
   # ----------
   # Build + repo tools
@@ -134,7 +137,10 @@ ${ENVNAME}:
   # debugging/profiling/testing/logging
   # ----------
   - gdb
-  - hpctoolkit@develop ^dyninst@master ^elfutils ~debuginfod
+  # - hpctoolkit@develop buildtype=debugoptimized ^dyninst@master ^elfutils ~debuginfod
+  - hpctoolkit@develop
+  - dyninst@master
+  - elfutils ~debuginfod
   - papi
   - gperftools
   - googletest
@@ -144,6 +150,7 @@ ${ENVNAME}:
   - arch=gh200:
     # GPU support
     - cuda@12.8
+    - whip@main
 
     # Maths
     - nvpl-blas
