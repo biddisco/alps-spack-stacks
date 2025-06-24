@@ -7,7 +7,10 @@ import os
 import re
 import sys
 
-import spack.compilers
+from spack_repo.builtin.build_systems.autotools import AutotoolsPackage
+from spack_repo.builtin.build_systems.cuda import CudaPackage
+
+import spack.compilers.config
 from spack.package import *
 
 
@@ -42,10 +45,13 @@ class Openmpi(AutotoolsPackage, CudaPackage):
 
     # Current
     version(
-        "5.0.6", sha256="bd4183fcbc43477c254799b429df1a6e576c042e74a2d2f8b37d537b2ff98157"
-    )  # libmpi.so.40.40.6
+        "5.0.7", sha256="119f2009936a403334d0df3c0d74d5595a32d99497f9b1d41e90019fee2fc2dd"
+    )  # libmpi.so.40.40.7
 
     # Still supported
+    version(
+        "5.0.6", sha256="bd4183fcbc43477c254799b429df1a6e576c042e74a2d2f8b37d537b2ff98157"
+    )  # libmpi.so.40.40.6
     version(
         "5.0.5", sha256="6588d57c0a4bd299a24103f4e196051b29e8b55fbda49e11d5b3d32030a32776"
     )  # libmpi.so.40.40.5
@@ -401,10 +407,6 @@ class Openmpi(AutotoolsPackage, CudaPackage):
         "1.0", sha256="cf75e56852caebe90231d295806ac3441f37dc6d9ad17b1381791ebb78e21564"
     )  # libmpi.so.0.0.0
 
-    depends_on("c", type="build")
-    depends_on("cxx", type="build")
-    depends_on("fortran", type="build")
-
     patch("ad_lustre_rwcontig_open_source.patch", when="@1.6.5")
     patch("llnl-platforms.patch", when="@1.6.5")
     patch("configure.patch", when="@1.10.1")
@@ -456,6 +458,12 @@ class Openmpi(AutotoolsPackage, CudaPackage):
     patch("pmix_getline_pmix_version.patch", when="@5.0.0:5.0.3")
     patch("pmix_getline_pmix_version-prte.patch", when="@5.0.3")
 
+    # OpenMPI 5.0.7 specific patch - see https://github.com/open-mpi/ompi/pull/13106
+    patch(
+        "https://github.com/open-mpi/ompi/commit/d10e9765bdd28e62621395aef6bbb7710bae2e82.patch?full_index=1",
+        sha256="38529b557df029d6a987fa7e337db40b0ac1c1bb921776b95aacaa40e945cd21",
+        when="@4.1.8,5.0.7",
+    )
     FABRICS = (
         "psm",
         "psm2",
@@ -473,9 +481,9 @@ class Openmpi(AutotoolsPackage, CudaPackage):
 
     variant(
         "fabrics",
-        values=disjoint_sets(
-            ("auto",), FABRICS  # shared memory transports
-        ).with_non_feature_values("auto", "none"),
+        values=disjoint_sets(("auto",), FABRICS).with_non_feature_values(
+            "auto", "none"
+        ),  # shared memory transports
         description="List of fabrics that are enabled; " "'auto' lets openmpi determine",
     )
 
@@ -516,6 +524,7 @@ class Openmpi(AutotoolsPackage, CudaPackage):
         when="@:4",
         description="Enable deprecated C++ exception support",
     )
+    variant("fortran", default=True, description="Enable Fortran support")
     variant("gpfs", default=False, description="Enable GPFS support")
     variant(
         "singularity",
@@ -553,6 +562,7 @@ class Openmpi(AutotoolsPackage, CudaPackage):
         when="@1.3:4",
         description="Prefix Open MPI to PATH and LD_LIBRARY_PATH on local and remote hosts",
     )
+    variant("ipv6", default=False, when="@4:", description="Enable IPv6 support")
     # Adding support to build a debug version of OpenMPI that activates
     # Memchecker, as described here:
     #
@@ -607,6 +617,10 @@ with '-Wl,-commons,use_dylibs' and without
     provides("mpi@:3.0", when="@1.7.5:1.10.7")
     provides("mpi@:3.1", when="@2.0.0:")
 
+    depends_on("c", type="build")
+    depends_on("cxx", type="build")
+    depends_on("fortran", type="build", when="+fortran")
+
     if sys.platform != "darwin":
         depends_on("numactl")
 
@@ -616,7 +630,7 @@ with '-Wl,-commons,use_dylibs' and without
 
     depends_on("perl", type="build")
     depends_on("pkgconfig", type="build")
-    depends_on("flex", type="build", when="@main")
+    #depends_on("flex", type="build", when="@main")
 
     depends_on("hwloc@2:", when="@4: ~internal-hwloc")
     # ompi@:3.0.0 doesn't support newer hwloc releases:
@@ -886,7 +900,7 @@ with '-Wl,-commons,use_dylibs' and without
 
         return find_libraries(libraries, root=self.prefix, shared=True, recursive=True)
 
-    def setup_run_environment(self, env):
+    def setup_run_environment(self, env: EnvironmentModifications) -> None:
         # Because MPI is both a runtime and a compiler, we have to setup the
         # compiler components as part of the run environment.
         env.set("MPICC", join_path(self.prefix.bin, "mpicc"))
@@ -900,13 +914,19 @@ with '-Wl,-commons,use_dylibs' and without
         if self.spec.satisfies("@1.7:"):
             env.set("MPIFC", join_path(self.prefix.bin, "mpifort"))
 
-    def setup_dependent_build_environment(self, env, dependent_spec):
+    def setup_dependent_build_environment(
+        self, env: EnvironmentModifications, dependent_spec: Spec
+    ) -> None:
         # Use the spack compiler wrappers under MPI
         dependent_module = dependent_spec.package.module
-        env.set("OMPI_CC", dependent_module.spack_cc)
-        env.set("OMPI_CXX", dependent_module.spack_cxx)
-        env.set("OMPI_FC", dependent_module.spack_fc)
-        env.set("OMPI_F77", dependent_module.spack_f77)
+        for var_name, attr_name in (
+            ("OMPI_CC", "spack_cc"),
+            ("OMPI_CXX", "spack_cxx"),
+            ("OMPI_FC", "spack_fc"),
+            ("OMPI_F77", "spack_f77"),
+        ):
+            if hasattr(dependent_module, attr_name):
+                env.set(var_name, getattr(dependent_module, attr_name))
 
         # See https://www.open-mpi.org/faq/?category=building#installdirs
         for suffix in [
@@ -933,6 +953,11 @@ with '-Wl,-commons,use_dylibs' and without
     def setup_dependent_package(self, module, dependent_spec):
         self.spec.mpicc = join_path(self.prefix.bin, "mpicc")
         self.spec.mpicxx = join_path(self.prefix.bin, self.cxxname)
+        # Some derived packages define the "fortran" variant, most don't. Checking on the
+        # presence of ~fortran makes us default to add fortran wrappers if the variant is
+        # not declared.
+        if self.spec.satisfies("~fortran"):
+            return
         self.spec.mpifc = join_path(self.prefix.bin, "mpif90")
         self.spec.mpif77 = join_path(self.prefix.bin, "mpif77")
 
@@ -1011,14 +1036,6 @@ with '-Wl,-commons,use_dylibs' and without
             return "--without-tm"
         return f"--with-tm={self.spec['pbs'].prefix}"
 
-    @run_before("autoreconf")
-    def die_without_fortran(self):
-        # Until we can pass variants such as +fortran through virtual
-        # dependencies depends_on('mpi'), require Fortran compiler to
-        # avoid delayed build errors in dependents.
-        if (self.compiler.f77 is None) and (self.compiler.fc is None):
-            raise InstallError("OpenMPI requires both C and Fortran compilers!")
-
     @when("@main")
     def autoreconf(self, spec, prefix):
         perl = which("perl")
@@ -1064,6 +1081,10 @@ with '-Wl,-commons,use_dylibs' and without
         if spec.satisfies("+orterunprefix"):
             config_args.append("--enable-orterun-prefix-by-default")
 
+        # Enable IPv6 support
+        if spec.satisfies("+ipv6"):
+            config_args.append("--enable-ipv6")
+
         # some scientific packages ignore deprecated/remove symbols. Re-enable
         # them for now, for discussion see
         # https://github.com/open-mpi/ompi/issues/6114#issuecomment-446279495
@@ -1089,9 +1110,15 @@ with '-Wl,-commons,use_dylibs' and without
             config_args.extend(["--enable-debug"])
 
         # Package dependencies
-        for dep in ["libevent", "lustre", "singularity", "valgrind"]:
+        for dep in ["lustre", "singularity", "valgrind"]:
             if "^" + dep in spec:
                 config_args.append("--with-{0}={1}".format(dep, spec[dep].prefix))
+
+        # libevent support
+        if spec.satisfies("+internal-libevent"):
+            config_args.append("--with-libevent=internal")
+        elif "^libevent" in spec:
+            config_args.append("--with-libevent={0}".format(spec["libevent"].prefix))
 
         # PMIx support
         if spec.satisfies("+internal-pmix"):
@@ -1191,6 +1218,8 @@ with '-Wl,-commons,use_dylibs' and without
 
         config_args.extend(self.enable_or_disable("mpi-cxx", variant="cxx"))
         config_args.extend(self.enable_or_disable("cxx-exceptions", variant="cxx_exceptions"))
+
+        config_args.extend(self.enable_or_disable("mpi-fortran", variant="fortran"))
 
         #
         # the Spack path padding feature causes issues with Open MPI's lex based parsing system
@@ -1360,7 +1389,7 @@ with '-Wl,-commons,use_dylibs' and without
 
 
 def get_spack_compiler_spec(compiler):
-    spack_compilers = spack.compilers.find_compilers([os.path.dirname(compiler)])
+    spack_compilers = spack.compilers.config.find_compilers([os.path.dirname(compiler)])
     actual_compiler = None
     # check if the compiler actually matches the one we want
     for spack_compiler in spack_compilers:

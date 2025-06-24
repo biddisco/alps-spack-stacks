@@ -31,6 +31,10 @@ packages:
     package_attributes:
       git: https://github.com/amirshehataornl/libfabric
 
+  h5hut:
+    package_attributes:
+      git: /users/biddisco/src/h5hut
+      # git: https://gitea.psi.ch/adelmann/H5hut
 
   # ------------------------------------------------------------
   # openblas?
