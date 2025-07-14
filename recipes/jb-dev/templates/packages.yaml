@@ -29,11 +29,11 @@ packages:
     # original :        https://github.com/ofiwg/libfabric.git
     # latest lnx work : https://github.com/amirshehataornl/libfabric
     package_attributes:
-      git: https://github.com/amirshehataornl/libfabric
+      git: https://github.com/ofiwg/libfabric.git
 
   h5hut:
     package_attributes:
-      git: /users/biddisco/src/h5hut
+      git: /capstor/scratch/cscs/biddisco/src/h5hut
       # git: https://gitea.psi.ch/adelmann/H5hut
 
   # ------------------------------------------------------------

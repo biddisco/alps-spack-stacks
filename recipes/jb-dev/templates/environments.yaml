@@ -45,11 +45,10 @@ ${ENVNAME}:
         spec: cray-mpich@8.1.32
         gpu: null
         depends:
-        # latest commit 5b6fd6e0efa770c8928fbc8a00e782b5a843c890 (HEAD -> lnx_refactor_main, amir/lnx_refactor_main)
-        - libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm
-        - cxi-driver@main
-        - libcxi@main
-        - cassini-headers@main
+        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
+        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
       cluster=oryx:
         spec: mpich
         gpu: cuda
@@ -58,11 +57,10 @@ ${ENVNAME}:
         gpu: cuda
         xspec: +cxi
         depends:
-        # latest commit 5b6fd6e0efa770c8928fbc8a00e782b5a843c890 (HEAD -> lnx_refactor_main, amir/lnx_refactor_main)
-        - libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm
-        - cxi-driver@main
-        - libcxi@main
-        - cassini-headers@main
+        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
+        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
 
     # ---------------
     # openmpi
@@ -73,10 +71,10 @@ ${ENVNAME}:
         xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
         gpu: null
         depends:
-        - libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm
-        - cxi-driver@main
-        - libcxi@main
-        - cassini-headers@main
+        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
+        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
       cluster=oryx:
         spec: openmpi@git.v5.0.x=main
         gpu: cuda
@@ -85,20 +83,22 @@ ${ENVNAME}:
         gpu: cuda
         xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
         depends:
-        - libfabric@git.lnx_refactor_main=main fabrics=lnx,cxi,rxm,tcp,shm #dev_path=/capstor/scratch/cscs/biddisco/src/libfabric
-          # ~debug
-        - cxi-driver@main       #dev_path=/capstor/scratch/cscs/biddisco/src/cxi-driver
-        - libcxi@main           #dev_path=/capstor/scratch/cscs/biddisco/src/libcxi
-        - cassini-headers@main  #dev_path=/capstor/scratch/cscs/biddisco/src/cassini-headers
+        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
+        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
 
   packages:
   - git
   - perl
+  - libtool
 
   specs:
 
   # - pika@main
   # - dla-future@master
+
+  - libtool@2.4.6
 
   # ----------
   # Build + repo tools
