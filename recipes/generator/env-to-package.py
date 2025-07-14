@@ -7,6 +7,7 @@ import yaml
 import sys
 import os
 import argparse
+import subprocess
 
 # read command line arguments
 parser = argparse.ArgumentParser()
@@ -33,7 +34,7 @@ with open(f'{args.filename}', 'r') as stream:
 output = f"# This file was auto-generated from {args.filename}\n"
 output += "\n"
 output += "import itertools, os, sys\n"
-output += "from spack.package import *\n"
+output += "from spack_repo.builtin.build_systems.cmake import *\n"
 output += "\n"
 output +=f"class {packagenameU}(CMakePackage):\n"
 output += "    homepage = \"https://www.dummy.org/\"\n"
@@ -42,7 +43,7 @@ output += "    git      = \"https://www.dummy.org/\"\n"
 output += "\n"
 output += "    version(\"develop\", branch=\"main\")\n"
 
-# extract the dependencies from the yaml specs section, assume 'spec' is one level down from top level key 
+# extract the dependencies from the yaml specs section, assume 'spec' is one level down from top level key
 # doign this allows us to import an env from stackinator, or a regular env yaml file
 try:
     specs = env[list(env.keys())[0]]['specs']
@@ -53,11 +54,15 @@ except KeyError:
 dependencies = []
 for spec in specs:
     output += f"    depends_on(\"{spec}\")\n"
-    # 
+    #
 print(output)
 
 if args.add:
-    spack_package_root = os.popen('spack location -r').read().strip() + "/var/spack/repos/builtin/packages"
+    spack_repo_list_cmd = "spack repo list | grep builtin | awk '{print $NF}'"
+    spack_repo_path = subprocess.check_output(spack_repo_list_cmd, shell=True, text=True).strip()
+    print(f"Builtin spack repo path: {spack_repo_path}")
+
+    spack_package_root = spack_repo_path + "/packages"
     tempdir = os.path.join(spack_package_root, args.packagename)
 else:
     # create a subdir named after the package if the subdir doesn't already exist
@@ -81,4 +86,3 @@ with open('./repo.yaml', 'w') as f:
     f.write(f"  namespace: 'userenv'\n")
     f.close()
     print("Repo file has been created")
-
