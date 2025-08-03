@@ -44,44 +44,44 @@ debug_output "declare the name we are using for spack environment"
 SPACK_ENV_NAME="${ENVNAME}"
 echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
 
-# =====================================
-debug_output "convert stackinator environment into a package "
-python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
-python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
+# # =====================================
+# debug_output "convert stackinator environment into a package "
+# python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
+# python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
 
-# =====================================
-debug_output "copy environment "
-cp -r $HOME/environments/$SPACK_ENV_NAME $mount_path
+# # =====================================
+# debug_output "copy environment "
+# cp -r $HOME/environments/$SPACK_ENV_NAME $mount_path
 
-# =====================================
-debug_output "create build-env "
-BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
-SPEC="$SPACK_ENV_NAME %gcc@13"
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV_DEV "$SPEC"
+# # =====================================
+# debug_output "create build-env "
+# BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
+# SPEC="$SPACK_ENV_NAME %gcc@13"
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV_DEV "$SPEC"
 
-# =====================================
-debug_output "cleanup user build environemnt"
-# make a copy of the dev build-env and remove the uncleaned /dev/shm version
-BUILD_ENV=$mount_path/buildenv.rc
-cp $BUILD_ENV_DEV $BUILD_ENV
-rm $BUILD_ENV_DEV
+# # =====================================
+# debug_output "cleanup user build environemnt"
+# # make a copy of the dev build-env and remove the uncleaned /dev/shm version
+# BUILD_ENV=$mount_path/buildenv.rc
+# cp $BUILD_ENV_DEV $BUILD_ENV
+# rm $BUILD_ENV_DEV
 
 # remove /dev/shm paths from build-env that will not be available to the final user
-GCCLOC=$($SPACK_CMD location -i gcc@13%gcc@13)
-sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
-sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
+# GCCLOC=$($SPACK_CMD location -i gcc@13%gcc@13)
+# sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
+# sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
 
-sed -i "/^HOME=/d"                                                  $BUILD_ENV
-sed -i "/^SPACK_ROOT=/d"                                            $BUILD_ENV
-sed -i "/^SPACK_SYSTEM_CONFIG_PATH=/d"                              $BUILD_ENV
-sed -i "/^SPACK_USER_CACHE_PATH=/d"                                 $BUILD_ENV
+# sed -i "/^HOME=/d"                                                  $BUILD_ENV
+# sed -i "/^SPACK_ROOT=/d"                                            $BUILD_ENV
+# sed -i "/^SPACK_SYSTEM_CONFIG_PATH=/d"                              $BUILD_ENV
+# sed -i "/^SPACK_USER_CACHE_PATH=/d"                                 $BUILD_ENV
 
-# =====================================
-debug_output "set permissions"
-chmod -R a+r $BUILD_ENV
+# # =====================================
+# debug_output "set permissions"
+# chmod -R a+r $BUILD_ENV
 
 # =====================================
 debug_output "Done"
