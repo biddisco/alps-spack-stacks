@@ -21,6 +21,7 @@ if not os.path.exists("packages"):
     os.makedirs("packages")
 # remove any hyphens from the package name and capitalize the first letter of each word
 packagenameU = args.packagename.replace("-", " ").title().replace(" ", "")
+package_dirname = args.packagename.replace("-", "_").lower()
 print(f"Package name: {packagenameU}")
 
 # read the yaml file
@@ -34,12 +35,14 @@ with open(f'{args.filename}', 'r') as stream:
 output = f"# This file was auto-generated from {args.filename}\n"
 output += "\n"
 output += "import itertools, os, sys\n"
-output += "from spack_repo.builtin.build_systems.cmake import *\n"
+output += "from spack_repo.builtin.build_systems.generic import Package\n"
+output += "from spack_repo.builtin.build_systems.cmake import CMakePackage\n"
+output += "from spack.package import *\n"
 output += "\n"
 output +=f"class {packagenameU}(CMakePackage):\n"
 output += "    homepage = \"https://www.dummy.org/\"\n"
 output += "    url      = \"https://www.dummy.org/\"\n"
-output += "    git      = \"https://www.dummy.org/\"\n"
+output +=f"    git      = \"https://dummmy.org/{packagenameU}.git\"\n"
 output += "\n"
 output += "    version(\"develop\", branch=\"main\")\n"
 
@@ -59,14 +62,17 @@ print(output)
 
 if args.add:
     spack_repo_list_cmd = "spack repo list | grep builtin | awk '{print $NF}'"
-    spack_repo_path = subprocess.check_output(spack_repo_list_cmd, shell=True, text=True).strip()
+    if sys.version_info < (3, 7):
+        spack_repo_path = subprocess.check_output(spack_repo_list_cmd, shell=True, universal_newlines=True).strip()
+    else:
+        spack_repo_path = subprocess.check_output(spack_repo_list_cmd, shell=True, text=True).strip()
     print(f"Builtin spack repo path: {spack_repo_path}")
 
     spack_package_root = spack_repo_path + "/packages"
-    tempdir = os.path.join(spack_package_root, args.packagename)
+    tempdir = os.path.join(spack_package_root, package_dirname)
 else:
     # create a subdir named after the package if the subdir doesn't already exist
-    tempdir = os.path.join("./packages", args.packagename)
+    tempdir = os.path.join("./packages", package_dirname)
 
 if not os.path.exists(tempdir):
     os.makedirs(tempdir)
@@ -82,7 +88,7 @@ with open(tempfile, 'w') as f:
 print(f'spackgen {args.packagename} "{args.packagename} %gcc" --reuse')
 
 with open('./repo.yaml', 'w') as f:
-    f.write(f"repo:\n")
-    f.write(f"  namespace: 'userenv'\n")
+    f.write("repo:\n")
+    f.write("  namespace: 'userenv'\n")
     f.close()
     print("Repo file has been created")

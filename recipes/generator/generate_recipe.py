@@ -55,7 +55,7 @@ def filter_items(data):
             new_key = check_key(k)
             if new_key is not None:
                 if new_key != k:
-                    if not k in sub: # only replace if not already done
+                    if k not in sub: 
                         new_dict[k] = filter_items(v)
                         sub.append(k)
                 else:
@@ -253,7 +253,9 @@ def main():
     generated_path = output_path.replace(os.path.expanduser("~"), "$HOME")
 
     banner("Arguments/Variables")
-    envname = f"{recipe}-{arch}-{compiler}-{mpi}"
+    envname = f"{recipe}-{arch}-{mpi}-{compiler}".lower()
+    # Capitalize the first letter of each component
+    # envname2 = "".join([part.capitalize() for part in [recipe, arch, mpi, compiler]])
     print(f"envname         = {envname}")
     print(f"recipe          = {recipe}")
     print(f"arch            = {arch}")
