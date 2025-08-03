@@ -39,6 +39,11 @@ SPACK_ROOT=$( $SPACK_CMD location -r )
 source $SPACK_ROOT/share/spack/setup-env.sh
 
 # =====================================
+debug_output "Copy wrapper script to uenv "
+cp $HOME/store/meta/recipe/wrapper-mpi.sh $mount_path/wrapper-mpi.sh
+chmod +x $mount_path/wrapper-mpi.sh
+
+# =====================================
 debug_output "declare the name we are using for spack environment"
 # this name must match the one we are using from environments.yaml
 SPACK_ENV_NAME="${ENVNAME}"
@@ -56,7 +61,7 @@ cp -r $HOME/environments/$SPACK_ENV_NAME $mount_path
 # =====================================
 debug_output "create build-env "
 BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
-SPEC="$SPACK_ENV_NAME %gcc@13"
+SPEC="$SPACK_ENV_NAME"
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
 $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
@@ -69,8 +74,8 @@ BUILD_ENV=$mount_path/buildenv.rc
 cp $BUILD_ENV_DEV $BUILD_ENV
 rm $BUILD_ENV_DEV
 
-remove /dev/shm paths from build-env that will not be available to the final user
-GCCLOC=$($SPACK_CMD location -i gcc@13%gcc@13)
+# remove /dev/shm paths from build-env that will not be available to the final user
+GCCLOC=$($SPACK_CMD location -i /$($SPACK_CMD find -x --format={hash} gcc))
 sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
 sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
 

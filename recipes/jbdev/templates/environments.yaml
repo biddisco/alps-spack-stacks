@@ -1,11 +1,11 @@
 # Example use:
-# cd $SRC/alps-vcluster/alps-uenv/recipes/jb-dev
+# cd $SRC/alps-vcluster/alps-uenv/recipes/jbdev
 # eiger
-# python ../generator/generate_recipe.py -m mpich -c gcc -C eiger -r jb-dev -t ./templates -o ./mpich
-# python ../generator/generate_recipe.py -m ompi  -c gcc -C eiger -r jb-dev -t ./templates -o ./ompi
+# python ../generator/generate_recipe.py -m mpich -c gcc -C eiger -r jbdev -t ./templates -o ./mpich
+# python ../generator/generate_recipe.py -m ompi  -c gcc -C eiger -r jbdev -t ./templates -o ./ompi
 # daint
-# python ../generator/generate_recipe.py -m mpich -c gcc -C daint -r jb-dev -t ./templates -o ./mpich
-# python ../generator/generate_recipe.py -m ompi  -c gcc -C daint -r jb-dev -t ./templates -o ./ompi
+# python ../generator/generate_recipe.py -m mpich -c gcc -C daint -r jbdev -t ./templates -o ./mpich
+# python ../generator/generate_recipe.py -m ompi  -c gcc -C daint -r jbdev -t ./templates -o ./ompi
 #
 # copy to alps
 # /home/biddisco/src/alps-vcluster/upalps.sh
@@ -23,18 +23,12 @@ ${ENVNAME}:
 
   unify: true
 
-  compiler:
-    compiler=gcc:
-      - toolchain: gcc
-        spec: gcc@13
-    compiler=llvm:
-      - toolchain: llvm
-        spec: nvhpc
-    compiler=gcc+llvm:
-      - toolchain: gcc
-        spec: gcc@12
-      - toolchain: llvm
-        spec: nvhpc
+  compiler=gcc:
+    compiler: [gcc]
+  compiler=llvm:
+    compiler: [llvm]
+  compiler=gcc+llvm:
+    compiler: [gcc, llvm]
 
   mpi:
     # ---------------
@@ -42,25 +36,25 @@ ${ENVNAME}:
     # ---------------
     mpi=mpich:
       cluster=eiger:
-        spec: cray-mpich@8.1.32
+        spec: cray-mpich@9
         gpu: null
         depends:
-        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
-        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
         - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
       cluster=oryx:
         spec: mpich
         gpu: cuda
       cluster=else:
-        spec: cray-mpich@8.1.32
+        spec: cray-mpich@9
         gpu: cuda
         xspec: +cxi
         depends:
-        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
-        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
         - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
 
     # ---------------
     # openmpi
@@ -71,10 +65,10 @@ ${ENVNAME}:
         xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
         gpu: null
         depends:
-        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
-        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
         - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
       cluster=oryx:
         spec: openmpi@git.v5.0.x=main
         gpu: cuda
@@ -83,10 +77,10 @@ ${ENVNAME}:
         gpu: cuda
         xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
         depends:
-        - libfabric       @git.aac0bec1b004261057c816ab581ab9af4d2664b3=main fabrics=lnx,cxi,rxm,tcp,shm
-        - cxi-driver      @git.13d9ae13b2d47d080851557e07a4c825ca976cf0=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
         - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
 
   packages:
   - git
@@ -99,11 +93,12 @@ ${ENVNAME}:
   # - dla-future@master
 
   - libtool@2.4.6
+  - bash@5.2
 
   # ----------
   # Build + repo tools
   # ----------
-  - cmake
+  - cmake@4
   - ninja
   - direnv
   - libtree
@@ -122,7 +117,7 @@ ${ENVNAME}:
   # c++ helpers
   # ----------
   - fmt
-  - stdexec@git.nvhpc-25.03.rc1=main
+  - stdexec@main
   - boost
     +atomic +chrono +container +context +coroutine +filesystem +iostreams +json +multithreaded
     +program_options +regex +serialization +shared +system +test +thread +timer ~mpi
@@ -144,7 +139,7 @@ ${ENVNAME}:
   # ----------
   - gsl
   - fftw
-  - heffte@git.9eab7c0eb18e86acaccc2b5699b30e85a9e7bdda=2.4.1
+  - heffte@develop ~python
   - eigen
   - blaspp@2024.10.26
   - lapackpp@2024.10.26
@@ -159,10 +154,11 @@ ${ENVNAME}:
   # debugging/profiling/testing/logging
   # ----------
   - gdb
-  # - hpctoolkit@develop buildtype=debugoptimized ^dyninst@master ^elfutils ~debuginfod
   - hpctoolkit@develop
   - dyninst@master
   - elfutils ~debuginfod
+  - "libunwind@1.8.1:"
+
   - papi
   - gperftools
   - googletest
