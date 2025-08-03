@@ -1,0 +1,179 @@
+${ENVNAME}:
+
+  views:
+    develop:
+      # Exclude gcc-runtime to avoid adding a copy of libgomp.so to the view
+      exclude: [gcc-runtime]
+      link: all
+      uenv:
+        add_compilers: true
+        prefix_paths:
+          LD_LIBRARY_PATH: [lib, lib64]
+
+  unify: true
+
+  compiler=gcc:
+    compiler: [gcc]
+  compiler=llvm:
+    compiler: [llvm]
+  compiler=gcc+llvm:
+    compiler: [gcc, llvm]
+
+  mpi:
+    # ---------------
+    # mpich
+    # ---------------
+    mpi=mpich:
+      cluster=eiger:
+        spec: cray-mpich@9
+        gpu: null
+        depends:
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
+      cluster=oryx:
+        spec: mpich
+        gpu: cuda
+      cluster=else:
+        spec: cray-mpich@9
+        gpu: cuda
+        xspec: +cxi
+        depends:
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
+
+    # ---------------
+    # openmpi
+    # ---------------
+    mpi=ompi:
+      cluster=eiger:
+        spec: openmpi@git.v5.0.x=main
+        xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
+        gpu: null
+        depends:
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
+      cluster=oryx:
+        spec: openmpi@git.v5.0.x=main
+        gpu: cuda
+      cluster=else:
+        spec: openmpi@git.v5.0.x=main
+        gpu: cuda
+        xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
+        depends:
+        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
+
+  packages:
+  - git
+  - perl
+  - libtool
+
+  specs:
+
+  # ----------
+  # Build + repo tools
+  # ----------
+  - cmake@4 # cmake 3.29+ introduced a cupti bug, use 4.x
+  - ninja
+  - direnv
+
+  # ----------
+  # sys tools
+  # ----------
+  - hwloc
+
+  # ----------
+  # mpi tools
+  # ----------
+  - osu-micro-benchmarks
+
+  # ----------
+  # runtime/framework
+  # ----------
+  - kokkos +openmp
+
+  # ----------
+  # C++ libraries
+  # ----------
+  - boost +atomic +chrono +container +context +coroutine +filesystem +iostreams +json 
+    +multithreaded +program_options +regex +serialization +shared +system +test +thread 
+    +timer
+
+  # ----------
+  # IO/files
+  # ----------
+  - hdf5 +mpi +cxx +hl +szip +shared
+  - h5hut@master
+
+  # ----------
+  # maths
+  # ----------
+  - gsl
+  - fftw
+  - heffte@2.4.1 ~python +cuda +fftw
+  - eigen
+  - blaspp@2024.10.26
+  - lapackpp@2024.10.26
+
+  # ----------
+  # debugging/profiling/testing/logging
+  # ----------
+  - hpctoolkit@develop ~python ~mpi ^dyninst@master ^elfutils ~debuginfod
+  - papi
+  - gperftools
+  - googletest
+
+  - arch=gh200:
+    # GPU support
+    - cuda
+
+  - arch=zen2:
+    # Maths
+    - intel-oneapi-mkl
+    - openblas
+
+  - arch=ada:
+    # GPU support
+    - cuda
+    - whip@main
+
+    # Maths
+    - intel-oneapi-mkl
+
+  variants:
+  - build_type=Release
+  - cxxstd=20
+  - ~fortran
+  - ~examples
+  - ~tests
+  - ~testing
+  - +mpi
+  - +cxx
+  - +python
+
+  - arch=gh200:
+    - +cuda
+    - cuda_arch=90
+    # - +cuda_uvm
+    - +wrapper
+    - ~x11
+    - ^[virtuals=gl] egl
+
+  - arch=zen2:
+    - ~cuda
+    - ~x11
+
+  - arch=ada:
+    - +cuda
+    - cuda_arch=89
+    - +wrapper
+    - ~x11
+    - ^[virtuals=gl] egl

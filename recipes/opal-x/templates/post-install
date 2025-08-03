@@ -1,0 +1,95 @@
+#!/bin/bash
+
+# -------------------------------------
+# we output messages to stdout and also stderr to simplify debugging since logs are usually in
+# separate files and we want to see where errors are happening in the script
+function debug_output() {
+    {
+        echo ""
+        echo "-------------------------------------"
+        echo "-- $1"
+        echo "-------------------------------------"
+    } | tee >(cat >&2)
+}
+
+# =====================================
+debug_output "post install hook"
+mount_path={{ env.mount }}
+echo RUNNING IN $mount_path
+config_path={{ env.config }}
+echo config is in $config_path
+
+# =====================================
+debug_output "environment variables"
+printenv
+
+# =====================================
+debug_output "set vars we need frequently "
+HOME=$(pwd)
+SPACK_CMD="spack -C $config_path"
+#SPACK_CMD="spack -C $config_path --debug"
+
+# ------------------------------------------------
+# get hash from installed version of package
+# ------------------------------------------------
+spack_hash() {
+  HASH=$($SPACK_CMD find --format "{hash:7}" $1 | head -n 1)
+  echo "$HASH"
+}
+
+# =====================================
+debug_output "list all spack packages "
+$SPACK_CMD find -flv
+
+# =====================================
+debug_output "source spack environment setup "
+SPACK_ROOT=$( $SPACK_CMD location -r )
+source $SPACK_ROOT/share/spack/setup-env.sh
+
+# =====================================
+debug_output "declare the name we are using for spack environment"
+# this name must match the one we are using from environments.yaml
+SPACK_ENV_NAME="${ENVNAME}"
+echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
+
+# =====================================
+debug_output "convert stackinator environment into a package "
+python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
+python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
+
+# =====================================
+debug_output "copy environment "
+cp -r $HOME/environments/$SPACK_ENV_NAME $mount_path
+
+# =====================================
+debug_output "create build-env "
+BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
+SPEC="$SPACK_ENV_NAME"
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV_DEV "$SPEC"
+
+# =====================================
+debug_output "cleanup user build environemnt"
+# make a copy of the dev build-env and remove the uncleaned /dev/shm version
+BUILD_ENV=$mount_path/buildenv.rc
+cp $BUILD_ENV_DEV $BUILD_ENV
+rm $BUILD_ENV_DEV
+
+remove /dev/shm paths from build-env that will not be available to the final user
+GCCLOC=$($SPACK_CMD location -i /$($SPACK_CMD find -x --format={hash} gcc))
+sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
+sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
+
+sed -i "/^HOME=/d"                                                  $BUILD_ENV
+sed -i "/^SPACK_ROOT=/d"                                            $BUILD_ENV
+sed -i "/^SPACK_SYSTEM_CONFIG_PATH=/d"                              $BUILD_ENV
+sed -i "/^SPACK_USER_CACHE_PATH=/d"                                 $BUILD_ENV
+
+# =====================================
+debug_output "set permissions"
+chmod -R a+r $BUILD_ENV
+
+# =====================================
+debug_output "Done"

@@ -1,0 +1,11 @@
+name: ${ENVNAME}
+version: 2
+spack:
+  commit: develop
+  repo: https://github.com/biddisco/spack.git
+  packages:
+    commit: misc-fixes
+    repo: https://github.com/biddisco/spack-packages # https://github.com/spack/spack-packages.git
+store: /user-environment
+description: opal-x tools
+modules: false
