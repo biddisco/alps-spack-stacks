@@ -77,6 +77,7 @@ ${ENVNAME}:
   - libtool
 
   specs:
+  - bash@5.2
 
   # ----------
   # Build + repo tools
@@ -126,7 +127,11 @@ ${ENVNAME}:
   # ----------
   # debugging/profiling/testing/logging
   # ----------
-  - hpctoolkit@develop ~python ~mpi ^dyninst@master ^elfutils ~debuginfod
+  - hpctoolkit@develop ~python
+  - dyninst@master
+  - elfutils ~debuginfod
+  - "libunwind@1.8.1:"
+
   - papi
   - gperftools
   - googletest
