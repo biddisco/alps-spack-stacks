@@ -14,7 +14,8 @@ ${ENVNAME}:
 
   views:
     develop:
-      exclude: []
+      # Exclude gcc-runtime to avoid adding a copy of libgomp.so to the view
+      exclude: [gcc-runtime]
       link: all
       uenv:
         add_compilers: true
@@ -88,17 +89,13 @@ ${ENVNAME}:
   - libtool
 
   specs:
-
-  # - pika@main
-  # - dla-future@master
-
   - libtool@2.4.6
   - bash@5.2
 
   # ----------
   # Build + repo tools
   # ----------
-  - cmake@4
+  - cmake@4 # cmake 3.29+ introduced a cupti bug, use 4.x
   - ninja
   - direnv
   - libtree
@@ -114,7 +111,12 @@ ${ENVNAME}:
   - osu-micro-benchmarks
 
   # ----------
-  # c++ helpers
+  # runtime/framework
+  # ----------
+  - kokkos +openmp
+
+  # ----------
+  # C++ libraries
   # ----------
   - fmt
   - stdexec@main
@@ -122,10 +124,6 @@ ${ENVNAME}:
     +atomic +chrono +container +context +coroutine +filesystem +iostreams +json +multithreaded
     +program_options +regex +serialization +shared +system +test +thread +timer ~mpi
 
-  # ----------
-  # runtime/framework
-  # ----------
-  - kokkos +openmp
 
   # ----------
   # IO/files
@@ -139,7 +137,7 @@ ${ENVNAME}:
   # ----------
   - gsl
   - fftw
-  - heffte@develop ~python
+  - heffte@develop ~python +cuda +fftw
   - eigen
   - blaspp@2024.10.26
   - lapackpp@2024.10.26
