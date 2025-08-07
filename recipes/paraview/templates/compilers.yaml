@@ -1,17 +1,9 @@
 compiler=gcc:
-  bootstrap:
-    spec: gcc@12
   gcc:
-    specs:
-    - gcc@12
+    version: "12.3"
 
 compiler=llvm:
-  bootstrap:
-    spec: gcc@11
   gcc:
-    specs:
-    - gcc@11
+    version: "13"
   llvm:
-    requires: gcc@11
-    specs:
-    - llvm@13
+    version: "13"

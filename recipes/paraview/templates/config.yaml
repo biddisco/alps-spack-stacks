@@ -1,7 +1,11 @@
 name: ${ENVNAME}
+version: 2
 spack:
-  commit: a7b542dd37d264326c2d3e144cb7efaac6c4e580
-  repo: https://github.com/spack/spack.git
+  commit: develop
+  repo: https://github.com/biddisco/spack.git
+  packages:
+    commit: misc-fixes
+    repo: https://github.com/biddisco/spack-packages # https://github.com/spack/spack-packages.git
 store: /user-environment
-description: ParaView
+description: ParaView visualization tool
 modules: false
