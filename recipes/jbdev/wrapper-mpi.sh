@@ -182,6 +182,7 @@ export OMPI_MCA_pml='^ucx'
 export OMPI_MCA_mtl=ofi
 # tell libfabric that we will  be using LNX provider, valid values are "cxi", "lnx"
 export OMPI_MCA_opal_common_ofi_provider_include=lnx
+export OMPI_MCA_opal_common_ofi_provider_include=cxi
 # Disable PMIx security (psec) component munge : should be fixed by building openmpi/pmix without munge support
 export PMIX_MCA_psec=^munge
 

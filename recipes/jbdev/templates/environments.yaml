@@ -119,7 +119,7 @@ ${ENVNAME}:
   # C++ libraries
   # ----------
   - fmt
-  - stdexec@main
+  - stdexec@git.nvhpc-25.03.rc1=main
   - boost
     +atomic +chrono +container +context +coroutine +filesystem +iostreams +json +multithreaded
     +program_options +regex +serialization +shared +system +test +thread +timer ~mpi
@@ -167,6 +167,10 @@ ${ENVNAME}:
     # GPU support
     - cuda@12.8
     - whip@main
+
+    # Viz
+    # - ascent@develop +cuda +vtkh +python +occa +mfem 
+    # - conduit@develop
 
     # Maths
     - nvpl-blas
