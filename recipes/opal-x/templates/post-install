@@ -29,14 +29,6 @@ HOME=$(pwd)
 SPACK_CMD="spack -C $config_path"
 #SPACK_CMD="spack -C $config_path --debug"
 
-# ------------------------------------------------
-# get hash from installed version of package
-# ------------------------------------------------
-spack_hash() {
-  HASH=$($SPACK_CMD find --format "{hash:7}" $1 | head -n 1)
-  echo "$HASH"
-}
-
 # =====================================
 debug_output "list all spack packages "
 $SPACK_CMD find -flv
@@ -45,6 +37,11 @@ $SPACK_CMD find -flv
 debug_output "source spack environment setup "
 SPACK_ROOT=$( $SPACK_CMD location -r )
 source $SPACK_ROOT/share/spack/setup-env.sh
+
+# =====================================
+debug_output "Copy wrapper script to uenv "
+cp $HOME/store/meta/recipe/wrapper-mpi.sh $mount_path/wrapper-mpi.sh
+chmod +x $mount_path/wrapper-mpi.sh
 
 # =====================================
 debug_output "declare the name we are using for spack environment"
@@ -77,7 +74,7 @@ BUILD_ENV=$mount_path/buildenv.rc
 cp $BUILD_ENV_DEV $BUILD_ENV
 rm $BUILD_ENV_DEV
 
-remove /dev/shm paths from build-env that will not be available to the final user
+# remove /dev/shm paths from build-env that will not be available to the final user
 GCCLOC=$($SPACK_CMD location -i /$($SPACK_CMD find -x --format={hash} gcc))
 sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
 sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
