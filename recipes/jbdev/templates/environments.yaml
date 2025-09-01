@@ -31,7 +31,8 @@ ${ENVNAME}:
   compiler=gcc+llvm:
     compiler: [gcc, llvm]
 
-  mpi:
+
+  network:
     # ---------------
     # mpich
     # ---------------
@@ -48,14 +49,14 @@ ${ENVNAME}:
         spec: mpich
         gpu: cuda
       cluster=else:
-        spec: cray-mpich@9
         gpu: cuda
-        xspec: +cxi
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
+        specs: cray-mpich@8.1.32
+        # xspec: +cxi
+        # depends:
+        # - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
+        # - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
+        # - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
+        # - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
 
     # ---------------
     # openmpi

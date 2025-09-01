@@ -169,6 +169,11 @@ printf "Hostname=%-12s, Rank=%-4d ,Local=%-3d ,RPN=%-3d ,CPUs=%-8s ,GPU=%-1s ,NI
 export CUDA_VISIBLE_DEVICES=$gpu
 
 # ---------------
+#  cray-mpich
+# ---------------
+export MPICH_GPU_SUPPORT_ENABLED=1
+
+# ---------------
 # OpenMPI mappings for MCA variables
 # note that if we did not compile openmpi with ucx/tcp/infiniband/etc then turning these off isn't necessary
 # ---------------
