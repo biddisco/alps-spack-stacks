@@ -31,26 +31,22 @@ ${ENVNAME}:
   compiler=gcc+llvm:
     compiler: [gcc, llvm]
 
-
   network:
     # ---------------
     # mpich
     # ---------------
     mpi=mpich:
       cluster=eiger:
-        spec: cray-mpich@9
-        gpu: null
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
+        mpi: cray-mpich@9
+        specs: ['libfabric@2.2.0']
       cluster=oryx:
-        spec: mpich
-        gpu: cuda
+        mpi: mpich +cuda
       cluster=else:
-        gpu: cuda
-        specs: cray-mpich@8.1.32
+        mpi: cray-mpich@9 +cuda
+        specs:
+        - libfabric@2.2.0   
+             
+        # specs: ['libfabric@git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm']
         # xspec: +cxi
         # depends:
         # - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
@@ -63,26 +59,11 @@ ${ENVNAME}:
     # ---------------
     mpi=ompi:
       cluster=eiger:
-        spec: openmpi@git.v5.0.x=main
-        xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-        gpu: null
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
+        specs: ['openmpi@git.v5.0.x=main']
       cluster=oryx:
-        spec: openmpi@git.v5.0.x=main
-        gpu: cuda
+        specs: ['openmpi@git.v5.0.x=main']
       cluster=else:
-        spec: openmpi@git.v5.0.x=main
-        gpu: cuda
-        xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
+        specs: ['openmpi@git.v5.0.x=main']
 
   packages:
   - git

@@ -25,12 +25,12 @@ packages:
     package_attributes:
       git: https://github.com/biddisco/ompi
 
-  libfabric:
-    buildable: false
-    externals:
-    - spec: libfabric@1.22.0 fabrics=cxi,rxm,tcp +cuda~debug~kdreg~level_zero~uring build_system=autotools cuda_arch:=90 arch=linux-sles15-neoverse_v2
-      prefix: /opt/cray/libfabric/1.22.0/
-    require: fabrics=cxi,rxm,tcp
+  # libfabric:
+  #   buildable: true
+  #   externals:
+  #   - spec: libfabric@1.22.0 fabrics=cxi,rxm,tcp +cuda~debug~kdreg~level_zero~uring build_system=autotools cuda_arch:=90 arch=linux-sles15-neoverse_v2
+  #     prefix: /opt/cray/libfabric/1.22.0/
+  #   require: fabrics=cxi,rxm,tcp
     # original :        https://github.com/ofiwg/libfabric.git
     # latest lnx work : https://github.com/amirshehataornl/libfabric
     # package_attributes:
