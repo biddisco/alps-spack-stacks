@@ -19,57 +19,45 @@ ${ENVNAME}:
   compiler=gcc+llvm:
     compiler: [gcc, llvm]
 
-  mpi:
+  network:
     # ---------------
     # mpich
     # ---------------
     mpi=mpich:
       cluster=eiger:
-        spec: cray-mpich@9
-        gpu: null
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
+        mpi: cray-mpich@8.1.32
+        specs: ['libfabric@2.2.0']
       cluster=oryx:
-        spec: mpich
-        gpu: cuda
+        mpi: mpich +cuda
+      cluster=beverin:
+        mpi: cray-mpich@9 +rocm
+        specs:
+        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main fabrics=lnx,cxi,rxm,tcp,shm   
+        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
+        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
+        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
       cluster=else:
-        spec: cray-mpich@9
-        gpu: cuda
-        xspec: +cxi
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
-
+        mpi: cray-mpich@9 +cuda
+        specs:
+        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
+        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
+        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
+        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+             
     # ---------------
     # openmpi
     # ---------------
     mpi=ompi:
       cluster=eiger:
-        spec: openmpi@git.v5.0.x=main
-        xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-        gpu: null
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm
-      cluster=oryx:
-        spec: openmpi@git.v5.0.x=main
-        gpu: cuda
+        mpi: openmpi@git.v5.0.x=main
+        specs: ['libfabric@2.2.0']
       cluster=else:
-        spec: openmpi@git.v5.0.x=main
-        gpu: cuda
-        xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
+        mpi: openmpi@git.v5.0.x=main +cuda +continuations fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
+        specs: 
+        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
+        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
+        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
+        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
 
   packages:
   - git
@@ -82,7 +70,7 @@ ${ENVNAME}:
   # ----------
   # Build + repo tools
   # ----------
-  - cmake@4 # cmake 3.29+ introduced a cupti bug, use 4.x
+  - cmake
   - ninja
   - direnv
 
@@ -119,26 +107,38 @@ ${ENVNAME}:
   # ----------
   - gsl
   - fftw
-  - heffte@2.4.1 ~python +cuda +fftw
+  - heffte@2.4.1 ~python +fftw
   - eigen
   - blaspp@2024.10.26
   - lapackpp@2024.10.26
-
-  # ----------
-  # debugging/profiling/testing/logging
-  # ----------
-  - hpctoolkit@develop ~python
-  - dyninst@master
-  - elfutils ~debuginfod
-  - "libunwind@1.8.1:"
 
   - papi
   - gperftools
   - googletest
 
+  # ----------
+  # viz support
+  # ----------
+  - conduit +python +mpi +hdf5
+  - libcatalyst +mpi +conduit +python
+  - ascent@develop +python ~adios2 ~vtkh ~raja ~umpire
+    # - adios2 +hdf5 +mpi ~zfp ~mgard
+
+  - arch=mi300:
+    # GPU support
+    - hip
+      
   - arch=gh200:
     # GPU support
-    - cuda
+    - cuda@12.8
+    # ----------
+    # debugging/profiling/testing/logging
+    # ----------
+    - hpctoolkit@2025.0.1 ~python
+    - dyninst@master
+    - elfutils ~debuginfod
+    - "libunwind@1.8.1:"
+    - cmake@4 # cmake 3.29+ introduced a cupti bug, use 4.x
 
   - arch=zen2:
     # Maths
@@ -147,7 +147,7 @@ ${ENVNAME}:
 
   - arch=ada:
     # GPU support
-    - cuda
+    - cuda@12
     - whip@main
 
     # Maths
@@ -164,10 +164,19 @@ ${ENVNAME}:
   - +cxx
   - +python
 
+  - arch=mi300:
+    # GPU support
+    - ~cuda
+    - +rocm
+    - amdgpu_target=gfx942
+    - +wrapper
+    - ~x11
+    - ^[virtuals=gl] egl
+
   - arch=gh200:
     - +cuda
     - cuda_arch=90
-    # - +cuda_uvm
+      # - +cuda_uvm
     - +wrapper
     - ~x11
     - ^[virtuals=gl] egl

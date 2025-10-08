@@ -3,7 +3,7 @@
 #SBATCH --job-name=uenv-prepare
 #SBATCH --time=02:30:00
 #SBATCH --nodes=1
-#SBATCH --partition=normal
+#SBATCH --partition=mi300
 #SBATCH --account=csstaff
 #SBATCH --output=/users/biddisco/${CLUSTER}-stackinator-output.%j.txt
 #SBATCH --error=/users/biddisco/${CLUSTER}-stackinator-error.%j.txt
@@ -40,8 +40,8 @@ DATE=$(date '+%Y-%m-%d')
 SQUASHFS_IMAGE_NAME=$SCRATCH/${SQUASHFS_NAME}-$DATE.squashfs
 
 # -----------------------------------------"
-http_proxy=http://proxy.cscs.ch:8080
-https_proxy=$http_proxy
+# http_proxy=http://proxy.cscs.ch:8080
+# https_proxy=$http_proxy
 
 # -----------------------------------------"
 debug_output "Setup/clean build dir"
@@ -59,7 +59,7 @@ cd $BUILD_DIR
 
 # -----------------------------------------"
 debug_output "make squashfs image"
-env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" http_proxy=$http_proxy https_proxy=$https_proxy no_proxy="$no_proxy" cluster=$CLUSTER make store.squashfs -j
+env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" cluster=$CLUSTER make store.squashfs -j
 
 # -----------------------------------------"
 debug_output "Force push anything that was built successfully"

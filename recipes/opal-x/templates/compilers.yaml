@@ -1,6 +1,6 @@
 compiler=gcc:
   gcc:
-    version: "13"
+    version: "12"
 
 compiler=llvm:
   gcc:
