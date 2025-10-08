@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 
+# last edit 2025-09-19 by JB
 # Warning - this wrapper script won't work for N>1 GPUs per rank
 
 # -----------------------------------------------------------------------------
@@ -29,7 +30,7 @@ fi
 #   when using openmpi   : either srun or mpirun should work
 # large message size expected BW outputs for openmpi runs are included for reference
 # we use $NTHREADS cores per rank to illustrate openmpi binding syntax
-# (add export OMP_NTHREADS=$NTHREADS (or whatever) when using openmp)
+# (add export OMP_NUM_THREADS=$NTHREADS (or whatever) when using openmp)
 # --------------------------------------------
 
 # --------------------------------------------
@@ -128,7 +129,34 @@ IFS=',' read -r first_numa other_nodes <<< "$numa_nodes"
 
 # The first numa node (in the binding list) is the one we will use for GPU and NIC selection
 gpu=$first_numa
-nic="cxi${first_numa}"
+
+# the mapping from hsn nic -> numa_node is : cxi0 = 0, cxi1 = 3, cxi2 = 1, cxi3 = 2
+#       cat /sys/class/net/hsn0/device/numa_node -> 0
+#       cat /sys/class/net/hsn1/device/numa_node -> 3
+#       cat /sys/class/net/hsn2/device/numa_node -> 1
+#       cat /sys/class/net/hsn3/device/numa_node -> 2
+# Map back from NUMA node to HSN NIC index
+declare -A numa_to_hsn
+# Use hardcoded mapping for performance unless system changes and we need to use dynamic mapping
+if true; then
+    # Hardcoded mapping: cxi0=0, cxi1=3, cxi2=1, cxi3=2
+    numa_to_hsn["0"]=0
+    numa_to_hsn["3"]=1
+    numa_to_hsn["1"]=2
+    numa_to_hsn["2"]=3
+else
+    # Fallback to dynamic mapping using sysfs
+    for i in 0 1 2 3; do
+        numa=$(cat /sys/class/net/hsn${i}/device/numa_node)
+        numa_to_hsn["$numa"]=$i
+    done
+fi
+
+hsn=${numa_to_hsn["$first_numa"]}
+if [ -z "$hsn" ]; then
+    hsn=0 # fallback in case mapping not found
+fi
+nic="cxi${hsn}"
 
 lrank=0
 grank=0
@@ -248,28 +276,6 @@ else
     export FI_MR_CACHE_MAX_SIZE=-1
     export FI_MR_CACHE_MAX_COUNT=524288
 fi
-
-# ---------------
-# (optionally) mimalloc : used by pika applications ignore otherwise
-# ---------------
-# export MIMALLOC_EAGER_COMMIT_DELAY=0
-# export MIMALLOC_ALLOW_LARGE_OS_PAGES=1
-
-# ---------------
-# (optionally) nvidia openacc vars - left here from previous wrapper scipts
-# ---------------
-# export NVCOMPILER_ACC_DEFER_UPLOADS=1
-# "This is currently necessary to properly set the OpenACC runtime for graph capture"
-# export NVCOMPILER_ACC_USE_GRAPH=1
-# export NV_ACC_CUDA_MEMALLOCASYNC=1
-# export NV_ACC_CUDA_MEMALLOCASYNC_POOLSIZE=500000000000
-
-# ---------------
-# (optionallly) Set OpenMP threads
-# ---------------
-# export OMP_PROC_BIND=spread
-# export OMP_PLACES=threads
-# export OMP_NTHREADS=$NTHREADS
 
 # ----------------------------------------------
 # execute the real command

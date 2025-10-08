@@ -112,10 +112,10 @@ packages:
         - '~rocm'
     intel-oneapi-mkl:
       require:
-        - 'threads=openmp'
+        - 'threads=none'
     openblas:
       variants:
-        - 'threads=openmp'
+        - 'threads=none'
 
   # ------------------------------------------------------------
   # ada specific settings
