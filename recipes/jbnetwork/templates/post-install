@@ -1,0 +1,126 @@
+#!/bin/bash
+
+# -------------------------------------
+# we output messages to stdout and also stderr to simplify debugging since logs are usually in
+# separate files and we want to see where errors are happening in the script
+function debug_output() {
+    {
+        echo ""
+        echo "-------------------------------------"
+        echo "-- $1"
+        echo "-------------------------------------"
+    } | tee >(cat >&2)
+}
+
+# =====================================
+debug_output "post install hook"
+mount_path={{ env.mount }}
+echo RUNNING IN $mount_path
+config_path={{ env.config }}
+echo config is in $config_path
+
+# =====================================
+debug_output "environment variables"
+printenv
+
+# =====================================
+debug_output "set vars we need frequently "
+HOME=$(pwd)
+SPACK_CMD="spack -C $config_path"
+#SPACK_CMD="spack -C $config_path --debug"
+
+# =====================================
+debug_output "list all spack packages "
+$SPACK_CMD find -flv
+
+# =====================================
+debug_output "source spack environment setup "
+SPACK_ROOT=$( $SPACK_CMD location -r )
+source $SPACK_ROOT/share/spack/setup-env.sh
+
+# =====================================
+debug_output "Copy wrapper script to uenv "
+cp $HOME/store/meta/recipe/wrapper-mpi.sh $mount_path/wrapper-mpi.sh
+chmod +x $mount_path/wrapper-mpi.sh
+
+# =====================================
+debug_output "declare the name we are using for spack environment"
+# this name must match the one we are using from environments.yaml
+SPACK_ENV_NAME="${ENVNAME}"
+echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
+
+# =====================================
+debug_output "convert stackinator environment into a package "
+python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
+python3 $HOME/store/meta/recipe/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
+
+# =====================================
+debug_output "copy environment "
+cp -r $HOME/environments/$SPACK_ENV_NAME $mount_path
+
+# =====================================
+debug_output "create build-env "
+BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
+SPEC="$SPACK_ENV_NAME"
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
+$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV_DEV "$SPEC"
+
+# =====================================
+debug_output "source build-env"
+source $BUILD_ENV_DEV
+
+# =====================================
+debug_output "CREATING env_nccl.sh"
+cat > $mount_path/env_nccl.sh <<EOF
+    source $mount_path/buildenv.rc
+    export LD_PRELOAD=$($SPACK_CMD location -i nccl)/lib/libnccl.so.2:\$LD_PRELOAD
+    export LD_PRELOAD=$($SPACK_CMD location -i libfabric)/lib/libfabric.so.1:\$LD_PRELOAD
+    export NCCL_TUNER_CONFIG_FILE=$mount_path/nccl_tuner.conf
+EOF
+
+# =====================================
+debug_output "BUILDING NCCL TUNER PLUGIN"
+SRC_ROOT=$mount_path/temp/src
+BUILD_ROOT=$mount_path/temp/build
+INSTALL_ROOT=$mount_path/install
+mkdir -p $SRC_ROOT
+mkdir -p $BUILD_ROOT
+mkdir -p $INSTALL_ROOT
+SCRATCH=/capstor/scratch/cscs/biddisco
+
+cd $BUILD_ROOT
+git clone --branch 2.27.7-1-cscs-tuner https://github.com/jpcoles-cscs/nccl.git nccl-tuner-cscs/nccl
+cd nccl-tuner-cscs/nccl/ext-tuner/example
+make
+cp libnccl-tuner-example.so $INSTALL_ROOT/libnccl-tuner-cscs.so
+
+# =====================================
+debug_output "clone benchmarking scripts"
+git clone https://github.com/jpcoles-cscs/nccl-stack-constellation-benchmarks $mount_path/nccl-benchmarks
+
+
+# =====================================
+debug_output "cleanup user build environemnt"
+# make a copy of the dev build-env and remove the uncleaned /dev/shm version
+BUILD_ENV=$mount_path/buildenv.rc
+cp $BUILD_ENV_DEV $BUILD_ENV
+rm $BUILD_ENV_DEV
+
+# remove /dev/shm paths from build-env that will not be available to the final user
+GCCLOC=$($SPACK_CMD location -i /$($SPACK_CMD find -x --format={hash} gcc))
+sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
+sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
+
+sed -i "/^HOME=/d"                                                  $BUILD_ENV
+sed -i "/^SPACK_ROOT=/d"                                            $BUILD_ENV
+sed -i "/^SPACK_SYSTEM_CONFIG_PATH=/d"                              $BUILD_ENV
+sed -i "/^SPACK_USER_CACHE_PATH=/d"                                 $BUILD_ENV
+
+# =====================================
+debug_output "set permissions"
+chmod -R a+r $BUILD_ENV
+
+# =====================================
+debug_output "Done"

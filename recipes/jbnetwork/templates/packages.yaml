@@ -1,0 +1,127 @@
+packages:
+
+  # common to all architectures (so far)
+  egl:
+    externals:
+    - spec: egl@1.0.0
+      prefix: /usr
+    buildable: false
+
+  llvm:
+    require: llvm ~gold ~cuda
+
+  hwloc:
+    variants:
+      - '~libxml2'
+
+  git:
+    # Force git as non-buildable to allow deprecated versions in environments
+    # https://github.com/spack/spack/pull/30040
+    buildable: false
+
+  openmpi:
+    # original :             https://github.com/open-mpi/ompi.git
+    # continuations branch : https://github.com/biddisco/ompi
+    package_attributes:
+      git: https://github.com/biddisco/ompi
+
+  # libfabric:
+  #   buildable: true
+  #   externals:
+  #   - spec: libfabric@1.22.0 fabrics=cxi,rxm,tcp +cuda~debug~kdreg~level_zero~uring build_system=autotools cuda_arch:=90 arch=linux-sles15-neoverse_v2
+  #     prefix: /opt/cray/libfabric/1.22.0/
+  #   require: fabrics=cxi,rxm,tcp
+    # original :        https://github.com/ofiwg/libfabric.git
+    # latest lnx work : https://github.com/amirshehataornl/libfabric
+    # package_attributes:
+    #   git: https://github.com/ofiwg/libfabric.git
+
+  h5hut:
+    package_attributes:
+      git: /capstor/scratch/cscs/biddisco/src/h5hut
+      # git: https://gitea.psi.ch/adelmann/H5hut
+
+  # ------------------------------------------------------------
+  # openblas?
+  # ------------------------------------------------------------
+  arch=rocco-uses-this:
+    blas:
+      require:
+      - openblas
+    lapack:
+      require:
+      - openblas
+    scalapack:
+      require:
+      - netlib-scalapack
+
+  # ------------------------------------------------------------
+  # GH200 specific settings
+  # ------------------------------------------------------------
+  arch=gh200:
+    all:
+      target: [neoverse_v2]
+      providers:
+        gl: [egl]
+
+    # Set nvpl as default blas, lapack and scalapack provider.
+    # Can be overwritten in environments if needed.
+    blas:
+      require: 'nvpl-blas'
+    lapack:
+      require: 'nvpl-lapack'
+    scalapack:
+      require: 'netlib-scalapack'
+
+    blaspp:
+      variants:
+        - '~cuda'
+        - '~openmp'
+        - '~rocm'
+    nvpl-blas:
+      require:
+        - 'threads=openmp'
+    nvpl-lapack:
+      require:
+        - 'threads=openmp'
+    openblas:
+      variants:
+        - 'threads=openmp'
+
+  # ------------------------------------------------------------
+  # eiger/zen2 specific settings
+  # ------------------------------------------------------------
+  arch=zen2:
+    all:
+      target: [x86_64]
+      providers:
+        gl: [osmesa]
+
+    # Set intel MKL as default blas, lapack and scalapack provider.
+    # Can be overwritten in environments if needed.
+    blas:
+      require: 'intel-oneapi-mkl'
+    lapack:
+      require: 'intel-oneapi-mkl'
+    scalapack:
+      require: 'intel-oneapi-mkl'
+    blaspp:
+      variants:
+        - '~cuda'
+        - '~openmp'
+        - '~rocm'
+    intel-oneapi-mkl:
+      require:
+        - 'threads=openmp'
+    openblas:
+      variants:
+        - 'threads=openmp'
+
+  # ------------------------------------------------------------
+  # ada specific settings
+  # ------------------------------------------------------------
+  arch=ada:
+    all:
+      target: [x86_64]
+      providers:
+        gl: [egl]

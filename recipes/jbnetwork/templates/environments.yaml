@@ -1,0 +1,142 @@
+# Example use:
+# cd $SRC/alps-vcluster/alps-uenv/recipes/jbnetwork
+# eiger
+# python ../generator/generate_recipe.py -m mpich -c gcc -C eiger -r jbnetwork -t ./templates -o ./mpich
+# python ../generator/generate_recipe.py -m ompi  -c gcc -C eiger -r jbnetwork -t ./templates -o ./ompi
+# daint
+# python ../generator/generate_recipe.py -m mpich -c gcc -C daint -r jbnetwork -t ./templates -o ./mpich
+# python ../generator/generate_recipe.py -m ompi  -c gcc -C daint -r jbnetwork -t ./templates -o ./ompi
+#
+# copy to alps
+# /home/biddisco/src/alps-vcluster/upalps.sh
+
+${ENVNAME}:
+
+  views:
+    develop:
+      # Exclude gcc-runtime to avoid adding a copy of libgomp.so to the view
+      exclude: [gcc-runtime]
+      link: all
+      uenv:
+        add_compilers: true
+        prefix_paths:
+          LD_LIBRARY_PATH: [lib, lib64]
+
+  unify: true
+
+  compiler=gcc:
+    compiler: [gcc]
+  compiler=llvm:
+    compiler: [llvm]
+  compiler=gcc+llvm:
+    compiler: [gcc, llvm]
+
+  network:
+    # ---------------
+    # mpich
+    # ---------------
+    mpi=mpich:
+      cluster=eiger:
+        mpi: cray-mpich@8.1.32
+        specs: ['libfabric@2.2.0']
+      cluster=oryx:
+        mpi: mpich +cuda
+      cluster=else:
+        mpi: cray-mpich@9 +cuda
+        specs:
+        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
+        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
+        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
+        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+             
+    # ---------------
+    # openmpi
+    # ---------------
+    mpi=ompi:
+      cluster=eiger:
+        specs: ['openmpi@git.v5.0.x=main']
+      cluster=else:
+        mpi: openmpi@git.v5.0.x=main +cuda +continuations fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
+        specs: 
+        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
+        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
+        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
+        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+
+  packages:
+  - git
+  - perl
+  - libtool
+
+  specs:
+  - libtool@2.4.6
+  - bash@5.2
+
+  # ----------
+  # Build + repo tools
+  # ----------
+  - cmake@4
+  - ninja
+  - direnv
+
+  # ----------
+  # utilities
+  # ----------
+  - hwloc
+  - boost
+    +atomic +chrono +container +context +coroutine +filesystem +iostreams +json +multithreaded
+    +program_options +regex +serialization +shared +system +test +thread +timer ~mpi
+
+  # ----------
+  # extra networking 
+  # ----------
+  - osu-micro-benchmarks
+
+  # ----------
+  # Python
+  # ----------
+  - python
+  - py-matplotlib
+  - py-numpy
+  - py-pandas
+
+  # GPU machine
+  - arch=gh200:
+    - cuda
+    # networking - NCCL over OFI
+    - nccl@master 
+    - aws-ofi-nccl@master
+    - nccl-tests@master
+
+  # GPU machine
+  - arch=ada:
+    - cuda
+    # networking - NCCL over OFI
+    - nccl@master 
+    - aws-ofi-nccl@master
+    - nccl-tests@master
+
+  variants:
+  - build_type=Release
+  - cxxstd=20
+  - ~fortran
+  - ~examples
+  - ~tests
+  - ~testing
+  - +mpi
+  - +cxx
+  - +python
+
+  - arch=gh200:
+    - +cuda
+    - cuda_arch=90
+    - +wrapper
+    - ~x11
+    - ^[virtuals=gl] egl
+
+  - arch=ada:
+    - +cuda
+    - cuda_arch=89
+    - +wrapper
+    - ~x11
+    - ^[virtuals=gl] egl
