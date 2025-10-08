@@ -27,29 +27,39 @@ ${ENVNAME}:
   compiler=gcc+llvm:
     compiler: [gcc, llvm]
 
-  mpi:
+  network:
+    # ---------------
+    # mpich
+    # ---------------
     mpi=mpich:
       cluster=eiger:
-        spec: cray-mpich@9
-        depends: [libfabric@main]
+        mpi: cray-mpich@9
+        specs: ['libfabric@2.2.0']
       cluster=oryx:
-        spec: laptop-mpich
-        gpu: cuda
+        mpi: mpich +cuda
       cluster=else:
-        spec: cray-mpich@9
-        gpu: cuda
-        xspec: +cxi
-        depends:
-        - cassini-headers @git.59b6de6a91d9637809677c50cc48b607a91a9acb=main
-        - cxi-driver      @git.08deb056fac4ca8b0d3d39b5f7cc0dad019ee266=main
-        - libcxi          @git.be1f7149482581ad589a124e5f6764b9d20d2d45=main
-        - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
-        
+        mpi: cray-mpich@9 +cuda
+        specs:
+        - libfabric@2.2.0   
+             
+        # specs: ['libfabric@git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm']
+        # xspec: +cxi
+        # depends:
+        # - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
+        # - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
+        # - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+        # - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
+
+    # ---------------
+    # openmpi
+    # ---------------
     mpi=ompi:
-      spec: openmpi@git.mpi-continue-5.0.6=main
-      xspec: +continuations +internal-pmix fabrics=cma,ofi,xpmem schedulers=slurm +cray-xpmem
-      gpu: null
-      depends: ["libfabric@main"]
+      cluster=eiger:
+        specs: ['openmpi@git.v5.0.x=main']
+      cluster=oryx:
+        specs: ['openmpi@git.v5.0.x=main']
+      cluster=else:
+        specs: ['openmpi@git.v5.0.x=main']
 
   packages:
   - git
@@ -110,7 +120,9 @@ ${ENVNAME}:
 
   # in-situ support
   - libcatalyst +mpi +python
-
+  - ascent +cuda +vtkh +python +occa +mfem 
+  - conduit
+  
   # vtk external deps
 #  - viskores +cuda_native +mpi
   - cgns@4.4.0
