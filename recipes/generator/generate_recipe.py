@@ -108,6 +108,7 @@ def copy_recursive(data):
 def architecture(cluster):
     arch_dict = {
         "balfrin": "gh200",
+        "beverin": "mi300",
         "bristen": "gh200",
         "clariden": "gh200",
         "daint": "gh200",
