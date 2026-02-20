@@ -38,28 +38,31 @@ SPACK_ROOT=$( $SPACK_CMD location -r )
 source $SPACK_ROOT/share/spack/setup-env.sh
 
 # =====================================
-debug_output "declare the name we are using for spack environment"
+debug_output "Activate environment we need for building paraview"
+$SPACK_CMD env list
+$SPACK_CMD env activate --sh develop
+
 # this name must match the one we are using from environments.yaml
-SPACK_ENV_NAME="${ENVNAME}"
-echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
+# SPACK_ENV_NAME="${ENVNAME}"
+# echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
 
-# =====================================
-debug_output "convert stackinator environment into a package"
-python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
-python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
+# # =====================================
+# debug_output "convert stackinator environment into a package"
+# python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
+# python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
 
-# =====================================
-debug_output "create build-env"
-BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
-SPEC="$SPACK_ENV_NAME %gcc@12 ^[virtuals=gl] egl"
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
-$SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV_DEV "$SPEC"
+# # =====================================
+# debug_output "create build-env"
+# BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
+# SPEC="$SPACK_ENV_NAME %gcc@12 ^[virtuals=gl] egl"
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
+# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV_DEV "$SPEC"
 
-# =====================================
-debug_output "source build-env"
-source $BUILD_ENV_DEV
+# # =====================================
+# debug_output "source build-env"
+# source $BUILD_ENV_DEV
 
 # =====================================
 debug_output "checkout paraview/vtk/vtkm branches"
@@ -112,8 +115,9 @@ fi
 # =====================================
 debug_output "download + extract nvidia index libs"
 cd $PARAVIEW_PLUGINS_DIR
-NVINDEX_FILENAME=nvidia-index-libs-5.12.0.20231121-linux
-NVINDEX_FILENAME=nvidia-index-libs-6.0.0.20250409-linux-aarch64
+#NVINDEX_FILENAME=nvidia-index-libs-5.12.0.20231121-linux
+#NVINDEX_FILENAME=nvidia-index-libs-6.0.0.20250409-linux-aarch64
+NVINDEX_FILENAME=nvidia-index-libs-6.0.0.20250604-linux-aarch64
 NVINDEX_TARBALL=${NVINDEX_FILENAME}.tar.bz2
 # curl -L "https://jfrog.svc.cscs.ch/artifactory/paraview/$NVINDEX_TARBALL" -o $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
 wget -q https://www.paraview.org/files/dependencies/$NVINDEX_TARBALL
@@ -166,6 +170,7 @@ cmake -G Ninja \
     -DVTK_MODULE_USE_EXTERNAL_VTK_pegtl=OFF                 \
     -DVTK_MODULE_USE_EXTERNAL_VTK_ioss=OFF                  \
     -DVTK_MODULE_USE_EXTERNAL_VTK_vtkviskores=OFF           \
+    -DVTK_MODULE_USE_EXTERNAL_VTK_scn=OFF                   \
     `# raytracing `                                         \
     -DPARAVIEW_ENABLE_RAYTRACING:BOOL=ON                    \
     -DVTKOSPRAY_ENABLE_DENOISER:BOOL=ON                     \
@@ -191,28 +196,28 @@ ninja
 ninja install
 ninja clean
 
-# =====================================
-debug_output "cleanup user build environemnt"
-# make a copy of the dev build-env and remove the /dev/shm version
-BUILD_ENV=$PARAVIEW_INSTALL_DIR/buildenv.rc
-cp $BUILD_ENV_DEV $BUILD_ENV
-rm $BUILD_ENV_DEV
-# add paraview path to build env
-sed -i "s|^CMAKE_PREFIX_PATH=|CMAKE_PREFIX_PATH=$PARAVIEW_INSTALL_DIR:|g" $BUILD_ENV
+# # =====================================
+# debug_output "cleanup user build environemnt"
+# # make a copy of the dev build-env and remove the /dev/shm version
+# BUILD_ENV=$PARAVIEW_INSTALL_DIR/buildenv.rc
+# cp $BUILD_ENV_DEV $BUILD_ENV
+# rm $BUILD_ENV_DEV
+# # add paraview path to build env
+# sed -i "s|^CMAKE_PREFIX_PATH=|CMAKE_PREFIX_PATH=$PARAVIEW_INSTALL_DIR:|g" $BUILD_ENV
 
-# remove /dev/shm paths from build-env that will not be available to the final user
-GCCLOC=$($SPACK_CMD location -i gcc@12%gcc@12)
-sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
-sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
+# # remove /dev/shm paths from build-env that will not be available to the final user
+# GCCLOC=$($SPACK_CMD location -i gcc@12%gcc@12)
+# sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
+# sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
 
-sed -i "/^HOME=/d"                                                  $BUILD_ENV
-sed -i "/^SPACK_ROOT=/d"                                            $BUILD_ENV
-sed -i "/^SPACK_SYSTEM_CONFIG_PATH=/d"                              $BUILD_ENV
-sed -i "/^SPACK_USER_CACHE_PATH=/d"                                 $BUILD_ENV
+# sed -i "/^HOME=/d"                                                  $BUILD_ENV
+# sed -i "/^SPACK_ROOT=/d"                                            $BUILD_ENV
+# sed -i "/^SPACK_SYSTEM_CONFIG_PATH=/d"                              $BUILD_ENV
+# sed -i "/^SPACK_USER_CACHE_PATH=/d"                                 $BUILD_ENV
 
 # =====================================
 debug_output "set permissions"
-chmod -R a+r $BUILD_ENV
+# chmod -R a+r $BUILD_ENV
 chmod -R a+r $SRC_ROOT
 chmod -R a+r $BUILD_ROOT
 chmod -R a+r $PARAVIEW_INSTALL_DIR

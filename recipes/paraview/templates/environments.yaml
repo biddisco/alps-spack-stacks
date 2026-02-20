@@ -24,7 +24,7 @@ ${ENVNAME}:
     compiler: [gcc]
   compiler=llvm:
     compiler: [llvm]
-  compiler=gcc+llvm:
+  compiler=gcc-llvm:
     compiler: [gcc, llvm]
 
   network:
@@ -34,20 +34,20 @@ ${ENVNAME}:
     mpi=mpich:
       cluster=eiger:
         mpi: cray-mpich@9
-        specs: ['libfabric@2.2.0']
+        specs: ['libfabric@2.3.1']
       cluster=oryx:
         mpi: mpich +cuda
       cluster=else:
         mpi: cray-mpich@9 +cuda
         specs:
-        - libfabric@2.2.0   
+        - libfabric@2.3.1   
              
         # specs: ['libfabric@git.v2.2.0=main fabrics=lnx,cxi,rxm,tcp,shm']
         # xspec: +cxi
         # depends:
         # - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
-        # - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
-        # - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+        # - cxi-driver      @git.6d61eeb23a7cf0c56b8043dfe89f341119cdb86b=main
+        # - libcxi          @git.4fac509ba8f1494d4a52fbfd9343bdd4b54cfadc=main
         # - libfabric       @git.v2.2.0=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm
 
     # ---------------
@@ -120,9 +120,9 @@ ${ENVNAME}:
 
   # in-situ support
   - libcatalyst +mpi +python
-  - ascent +cuda +vtkh +python +occa +mfem 
+#  - ascent +cuda +vtkh +python +occa ~mfem 
   - conduit
-  
+
   # vtk external deps
 #  - viskores +cuda_native +mpi
   - cgns@4.4.0

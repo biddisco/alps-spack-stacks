@@ -40,10 +40,6 @@ DATE=$(date '+%Y-%m-%d')
 SQUASHFS_IMAGE_NAME=$SCRATCH/${SPACK_ENV_NAME}-$DATE.squashfs
 
 # -----------------------------------------"
-http_proxy=http://proxy.cscs.ch:8080
-https_proxy=$http_proxy
-
-# -----------------------------------------"
 debug_output "Setup/clean build dir"
 rm   -rf ${BUILD_DIR}/*
 mkdir -p ${BUILD_DIR}
@@ -59,7 +55,7 @@ cd $BUILD_DIR
 
 # -----------------------------------------"
 debug_output "make squashfs image"
-env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" http_proxy=$http_proxy https_proxy=$https_proxy no_proxy="$no_proxy" cluster=$CLUSTER make store.squashfs -j32
+env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" cluster=$CLUSTER make store.squashfs -j32
 
 # -----------------------------------------"
 debug_output "Force push anything that was built successfully"
