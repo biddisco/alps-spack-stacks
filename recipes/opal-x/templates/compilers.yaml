@@ -1,9 +1,19 @@
 compiler=gcc:
-  gcc:
-    version: "12"
 
-compiler=llvm:
+  # AMD GPU Architectures (beverin)
+  arch=mi300:
+    gcc:
+      version: "13"
+    llvm-amdgpu:
+      version: "7.1.0"
+
+  arch=else:
+    gcc:
+      version: "13"
+
+compiler=gcc-llvm:
   gcc:
     version: "13"
-  llvm:
-    version: "13"
+  llvm-amdgpu:
+    version: "6.3.3"
+#    version: "7.1.0"

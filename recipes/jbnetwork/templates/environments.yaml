@@ -28,7 +28,7 @@ ${ENVNAME}:
     compiler: [gcc]
   compiler=llvm:
     compiler: [llvm]
-  compiler=gcc+llvm:
+  compiler=gcc-llvm:
     compiler: [gcc, llvm]
 
   network:
@@ -38,16 +38,16 @@ ${ENVNAME}:
     mpi=mpich:
       cluster=eiger:
         mpi: cray-mpich@8.1.32
-        specs: ['libfabric@2.2.0']
+        specs: ['libfabric@2.3.1']
       cluster=oryx:
         mpi: mpich +cuda
       cluster=else:
         mpi: cray-mpich@9 +cuda
         specs:
-        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
+        - libfabric       @git.cbcabd6590bcbbbde7beca1dbd1e9076b5411ffb=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
         - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
-        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
-        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+        - cxi-driver      @git.6d61eeb23a7cf0c56b8043dfe89f341119cdb86b=main
+        - libcxi          @git.4fac509ba8f1494d4a52fbfd9343bdd4b54cfadc=main
              
     # ---------------
     # openmpi
@@ -58,10 +58,10 @@ ${ENVNAME}:
       cluster=else:
         mpi: openmpi@git.v5.0.x=main +cuda +continuations fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
         specs: 
-        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
+        - libfabric       @git.cbcabd6590bcbbbde7beca1dbd1e9076b5411ffb=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
         - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
-        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
-        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+        - cxi-driver      @git.6d61eeb23a7cf0c56b8043dfe89f341119cdb86b=main
+        - libcxi          @git.4fac509ba8f1494d4a52fbfd9343bdd4b54cfadc=main
 
   packages:
   - git

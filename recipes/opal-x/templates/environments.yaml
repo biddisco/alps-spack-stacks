@@ -1,23 +1,29 @@
 ${ENVNAME}:
 
   views:
-    develop:
-      # Exclude gcc-runtime to avoid adding a copy of libgomp.so to the view
-      exclude: [gcc-runtime]
-      link: all
+    default-llvm:
+      link: roots
+      exclude: ["llvm-amdgpu"]
       uenv:
         add_compilers: true
         prefix_paths:
           LD_LIBRARY_PATH: [lib, lib64]
-
+    default:
+      link: roots
+      exclude: ["llvm"]
+      uenv:
+        add_compilers: true
+        prefix_paths:
+          LD_LIBRARY_PATH: [lib, lib64]
+                    
   unify: true
 
   compiler=gcc:
     compiler: [gcc]
   compiler=llvm:
     compiler: [llvm]
-  compiler=gcc+llvm:
-    compiler: [gcc, llvm]
+  compiler=gcc-llvm:
+    compiler: [gcc, llvm-amdgpu]
 
   network:
     # ---------------
@@ -26,23 +32,23 @@ ${ENVNAME}:
     mpi=mpich:
       cluster=eiger:
         mpi: cray-mpich@8.1.32
-        specs: ['libfabric@2.2.0']
+        specs: ['libfabric@2.3.1']
       cluster=oryx:
         mpi: mpich +cuda
       cluster=beverin:
-        mpi: cray-mpich@9 +rocm
+        mpi: cray-mpich@8.1.32 +rocm 
         specs:
-        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main fabrics=lnx,cxi,rxm,tcp,shm   
-        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
-        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
-        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+        - libfabric       @2.3.1 fabrics=cxi,rxm,tcp,rxd,udp +rocm amdgpu_target=gfx90a,gfx942
+        - cassini-headers @git.release/shs-13.0=main
+        - cxi-driver      @git.release/shs-13.0=main
+        - libcxi          @git.release/shs-13.0=main
       cluster=else:
         mpi: cray-mpich@9 +cuda
         specs:
-        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
-        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
-        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
-        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+        - libfabric       @main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm,xpmem
+        - cassini-headers @git.release/shs-13.0=main
+        - cxi-driver      @git.release/shs-13.0=main
+        - libcxi          @git.release/shs-13.0=main
              
     # ---------------
     # openmpi
@@ -50,14 +56,14 @@ ${ENVNAME}:
     mpi=ompi:
       cluster=eiger:
         mpi: openmpi@git.v5.0.x=main
-        specs: ['libfabric@2.2.0']
+        specs: ['libfabric@2.3.1']
       cluster=else:
-        mpi: openmpi@git.v5.0.x=main +cuda +continuations fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
+        mpi: openmpi@5.0.9 +cuda fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
         specs: 
-        - libfabric       @git.860a13caf4b7852b3334894da4be51e851913485=main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm   
+        - libfabric       @main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm,xpmem
         - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
-        - cxi-driver      @git.22ce80b6e33e9eb1564b65eb2043d4c7c613d728=main
-        - libcxi          @git.1eab4498d397c91de4f3652b9dfec1f9045fa4c8=main
+        - cxi-driver      @git.8d67e95460729230d2a64fe65c55c59c2baf9b63=main
+        - libcxi          @git.96ebbf59b2f74b9fb684c242f62b9a02f6527150=main
 
   packages:
   - git
@@ -65,8 +71,6 @@ ${ENVNAME}:
   - libtool
 
   specs:
-  - bash@5.2
-
   # ----------
   # Build + repo tools
   # ----------
@@ -82,12 +86,12 @@ ${ENVNAME}:
   # ----------
   # mpi tools
   # ----------
-  - osu-micro-benchmarks
+  - osu-micro-benchmarks ~xccl
 
   # ----------
   # runtime/framework
   # ----------
-  - kokkos +openmp
+  - kokkos@4.7 ~openmp +pic 
 
   # ----------
   # C++ libraries
@@ -107,37 +111,99 @@ ${ENVNAME}:
   # ----------
   - gsl
   - fftw
-  - heffte@2.4.1 ~python +fftw
+  - heffte@2.4.1 ~python ~fftw
   - eigen
   - blaspp@2024.10.26
   - lapackpp@2024.10.26
+  - openblas threads=openmp
 
+  # ----------
+  # profiling/debugging/testing
+  # ----------
   - papi
   - gperftools
   - googletest
 
   # ----------
+  # logging/formatting
+  # ----------
+  - spdlog
+  - fmt
+  
+  # ----------
   # viz support
   # ----------
-  - conduit +python +mpi +hdf5
-  - libcatalyst +mpi +conduit +python
-  - ascent@develop +python ~adios2 ~vtkh ~raja ~umpire
+#  - conduit +python +mpi +hdf5
+#  - libcatalyst +mpi +python
+  # - ascent@develop +python ~adios2 ~vtkh ~raja ~umpire
     # - adios2 +hdf5 +mpi ~zfp ~mgard
 
   - arch=mi300:
-    # GPU support
-    - hip
-      
+    # ------------------------------------------
+    # hip @ 6
+    # ------------------------------------------
+    - hip@6.3.3 ^mesa@23.3.6
+    - hipcub
+    - llvm-amdgpu
+    # rocm packages
+    - rocblas ^py-msgpack %cxx=gcc
+    - rocfft
+    - rocm-cmake %cxx=gcc
+    - rocm-openmp-extras
+    - rocm-core %cxx=gcc
+    - rocminfo
+    - rocprim
+    - rocprofiler-dev
+    - rocprofiler-register ^glog %cxx=gcc ^gflags %cxx=gcc
+    - rocprofiler-systems@6.3.3 +internal-dyninst
+    - rocrand
+    - rocsolver
+    - rocsparse
+    - rocthrust
+    - roctracer-dev-api %cxx=gcc
+    - roctracer-dev
+    - rocm-gdb
+    - rocm-debug-agent
+    # hip packages
+    - hipblas
+    - hipblaslt
+    - hiprand
+    - hipsparse
+    - hipfft
+    - hipblas-common
+    # networking
+    - rccl
+    # commits pinned for reproducibility, not bugs; update when updating recipe
+    # - aws-ofi-rccl@git.6dae1b0d588c27689ba6daa32710359ea96de78c=cxi
+    # - rccl-tests@git.6405c76e6826663bbb67bd40aeee8c70aa5d3094=develop %cxx=llvm-amdgpu ^cray-mpich@8.1.32 +rocm %c,cxx,fortran=gcc
+
+    # ------------------------------------------
+    # hip @ 7
+    # ------------------------------------------
+    # - hip@7.1.0 ^mesa@23.3.6
+    # - rocprofiler-dev
+    # - rocprofiler-systems@7 +internal-dyninst+internal-boost
+    # - rocprofiler-compute
+
+     
   - arch=gh200:
-    # GPU support
-    - cuda@12.8
+    # NVidia GPU support
+    - cuda@12.9.0
+    - cufftmp@11.4.0 # needs cuda @12.9
+    # - nccl-tests
+    # - aws-ofi-nccl
+    - nvshmem +mpi +cuda +nccl +libfabric +gdrcopy ~ucx
+    - nccl@2.27
+    - cublasmp
+    - cusolvermp
+
     # ----------
     # debugging/profiling/testing/logging
     # ----------
-    - hpctoolkit@2025.0.1 ~python
-    - dyninst@master
-    - elfutils ~debuginfod
-    - "libunwind@1.8.1:"
+    # - hpctoolkit@2025.0.1 ~python
+    # - dyninst@master
+    # - elfutils ~debuginfod
+    # - "libunwind@1.8.1:"
     - cmake@4 # cmake 3.29+ introduced a cupti bug, use 4.x
 
   - arch=zen2:
@@ -168,14 +234,20 @@ ${ENVNAME}:
     # GPU support
     - ~cuda
     - +rocm
-    - amdgpu_target=gfx942
+    - +apu
+    - amdgpu_target=gfx942          # ,gfx90a kokkos only allows one arch
+    - amdgpu_target_sram_ecc=gfx942 # ,gfx90a
     - +wrapper
     - ~x11
+    - ~adios2
+    - ~zfp
+#    - ^python@3.12.12
     - ^[virtuals=gl] egl
-
+  
   - arch=gh200:
     - +cuda
     - cuda_arch=90
+    - +mpi_gpu_aware
       # - +cuda_uvm
     - +wrapper
     - ~x11

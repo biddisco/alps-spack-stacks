@@ -129,34 +129,7 @@ IFS=',' read -r first_numa other_nodes <<< "$numa_nodes"
 
 # The first numa node (in the binding list) is the one we will use for GPU and NIC selection
 gpu=$first_numa
-
-# the mapping from hsn nic -> numa_node is : cxi0 = 0, cxi1 = 3, cxi2 = 1, cxi3 = 2
-#       cat /sys/class/net/hsn0/device/numa_node -> 0
-#       cat /sys/class/net/hsn1/device/numa_node -> 3
-#       cat /sys/class/net/hsn2/device/numa_node -> 1
-#       cat /sys/class/net/hsn3/device/numa_node -> 2
-# Map back from NUMA node to HSN NIC index
-declare -A numa_to_hsn
-# Use hardcoded mapping for performance unless system changes and we need to use dynamic mapping
-if true; then
-    # Hardcoded mapping: cxi0=0, cxi1=3, cxi2=1, cxi3=2
-    numa_to_hsn["0"]=0
-    numa_to_hsn["3"]=1
-    numa_to_hsn["1"]=2
-    numa_to_hsn["2"]=3
-else
-    # Fallback to dynamic mapping using sysfs
-    for i in 0 1 2 3; do
-        numa=$(cat /sys/class/net/hsn${i}/device/numa_node)
-        numa_to_hsn["$numa"]=$i
-    done
-fi
-
-hsn=${numa_to_hsn["$first_numa"]}
-if [ -z "$hsn" ]; then
-    hsn=0 # fallback in case mapping not found
-fi
-nic="cxi${hsn}"
+nic="cxi${first_numa}"
 
 lrank=0
 grank=0
@@ -197,9 +170,14 @@ printf "Hostname=%-12s, Rank=%-4d ,Local=%-3d ,RPN=%-3d ,CPUs=%-8s ,GPU=%-1s ,NI
 export CUDA_VISIBLE_DEVICES=$gpu
 
 # ---------------
-#  cray-mpich
+#  cray-mpich : see https://cpe.ext.hpe.com/docs/24.03/mpt/mpich/intro_mpi.html#general-mpich-environment-variables
 # ---------------
+# GPU support
 export MPICH_GPU_SUPPORT_ENABLED=1
+export MPICH_GPU_IPC_ENABLED=1
+export MPICH_GPU_IPC_CACHE_MAX_SIZE=128
+# debug info
+export MPICH_OFI_CXI_COUNTER_REPORT=1
 
 # ---------------
 # OpenMPI mappings for MCA variables

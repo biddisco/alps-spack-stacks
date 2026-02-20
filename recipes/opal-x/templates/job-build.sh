@@ -1,9 +1,9 @@
 #!/bin/bash
 
 #SBATCH --job-name=uenv-prepare
-#SBATCH --time=02:30:00
+#SBATCH --time=04:00:00
 #SBATCH --nodes=1
-#SBATCH --partition=mi300
+#SBATCH --partition=mi200 # use partition mi200 for compatibility (zen3, zen4 nodes)
 #SBATCH --account=csstaff
 #SBATCH --output=/users/biddisco/${CLUSTER}-stackinator-output.%j.txt
 #SBATCH --error=/users/biddisco/${CLUSTER}-stackinator-error.%j.txt
@@ -38,10 +38,6 @@ BUILD_DIR=/dev/shm/$USER
 #BUILD_DIR=/mnt/uenv-tmp
 DATE=$(date '+%Y-%m-%d')
 SQUASHFS_IMAGE_NAME=$SCRATCH/${SQUASHFS_NAME}-$DATE.squashfs
-
-# -----------------------------------------"
-# http_proxy=http://proxy.cscs.ch:8080
-# https_proxy=$http_proxy
 
 # -----------------------------------------"
 debug_output "Setup/clean build dir"
@@ -79,7 +75,7 @@ fi
 # -----------------------------------------
 # debug : create a shell using the spack setup used to create the squashfs
 # -----------------------------------------
-# $BUILD_DIR/bwrap-mutable-root.sh --tmpfs ~ --bind $BUILD_DIR/tmp /tmp --bind $BUILD_DIR/store /user-environment env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin https_proxy=$https_proxy http_proxy=$http_proxy no_proxy="$no_proxy" SPACK_SYSTEM_CONFIG_PATH=/user-environment/config /bin/bash --norc --noprofile
+# $BUILD_DIR/bwrap-mutable-root.sh --tmpfs ~ --bind $BUILD_DIR/tmp /tmp --bind $BUILD_DIR/store /user-environment env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin SPACK_SYSTEM_CONFIG_PATH=/user-environment/config /bin/bash --norc --noprofile
 
 # -----------------------------------------"
 #debug_output "Cleanup /dev/shm directories"

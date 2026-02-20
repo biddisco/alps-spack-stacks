@@ -40,10 +40,6 @@ DATE=$(date '+%Y-%m-%d')
 SQUASHFS_IMAGE_NAME=$SCRATCH/${SQUASHFS_NAME}-$DATE.squashfs
 
 # -----------------------------------------"
-http_proxy=http://proxy.cscs.ch:8080
-https_proxy=$http_proxy
-
-# -----------------------------------------"
 debug_output "Setup/clean build dir"
 rm   -rf ${BUILD_DIR}/*
 mkdir -p ${BUILD_DIR}
@@ -59,7 +55,7 @@ cd $BUILD_DIR
 
 # -----------------------------------------"
 debug_output "make squashfs image"
-env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" http_proxy=$http_proxy https_proxy=$https_proxy no_proxy="$no_proxy" cluster=$CLUSTER make store.squashfs -j
+env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin HOME="$HOME" cluster=$CLUSTER make store.squashfs -j
 
 # -----------------------------------------"
 debug_output "Force push anything that was built successfully"
@@ -79,7 +75,7 @@ fi
 # -----------------------------------------
 # debug : create a shell using the spack setup used to create the squashfs
 # -----------------------------------------
-# $BUILD_DIR/bwrap-mutable-root.sh --tmpfs ~ --bind $BUILD_DIR/tmp /tmp --bind $BUILD_DIR/store /user-environment env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin https_proxy=$https_proxy http_proxy=$http_proxy no_proxy="$no_proxy" SPACK_SYSTEM_CONFIG_PATH=/user-environment/config /bin/bash --norc --noprofile
+# $BUILD_DIR/bwrap-mutable-root.sh --tmpfs ~ --bind $BUILD_DIR/tmp /tmp --bind $BUILD_DIR/store /user-environment env --ignore-environment PATH=/usr/bin:/bin:`pwd`/spack/bin SPACK_SYSTEM_CONFIG_PATH=/user-environment/config /bin/bash --norc --noprofile
 
 # -----------------------------------------"
 #debug_output "Cleanup /dev/shm directories"
