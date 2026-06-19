@@ -5,7 +5,8 @@ compiler=gcc:
     gcc:
       version: "13"
     llvm-amdgpu:
-      version: "7.1.0"
+      # version: "7.1.0"
+      version: "6.3.3"
 
   arch=else:
     gcc:
@@ -15,5 +16,5 @@ compiler=gcc-llvm:
   gcc:
     version: "13"
   llvm-amdgpu:
+    # version: "7.1.0"
     version: "6.3.3"
-#    version: "7.1.0"

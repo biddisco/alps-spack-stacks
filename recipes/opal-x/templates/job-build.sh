@@ -3,7 +3,7 @@
 #SBATCH --job-name=uenv-prepare
 #SBATCH --time=04:00:00
 #SBATCH --nodes=1
-#SBATCH --partition=mi200 # use partition mi200 for compatibility (zen3, zen4 nodes)
+#SBATCH --partition=normal # normal or amd/beverin use partition mi200 for compatibility (zen3, zen4 nodes)
 #SBATCH --account=csstaff
 #SBATCH --output=/users/biddisco/${CLUSTER}-stackinator-output.%j.txt
 #SBATCH --error=/users/biddisco/${CLUSTER}-stackinator-error.%j.txt

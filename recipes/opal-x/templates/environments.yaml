@@ -16,7 +16,9 @@ ${ENVNAME}:
         prefix_paths:
           LD_LIBRARY_PATH: [lib, lib64]
                     
-  unify: true
+  unify: when_possible
+  duplicates:
+    strategy: full
 
   compiler=gcc:
     compiler: [gcc]
@@ -32,11 +34,15 @@ ${ENVNAME}:
     mpi=mpich:
       cluster=eiger:
         mpi: cray-mpich@8.1.32
-        specs: ['libfabric@2.3.1']
+        specs:
+        - libfabric       @main fabrics=cxi,rxm,tcp,shm,xpmem
+        - cassini-headers @git.release/shs-13.0=main
+        - cxi-driver      @git.release/shs-13.0=main
+        - libcxi          @git.release/shs-13.0=main
       cluster=oryx:
         mpi: mpich +cuda
       cluster=beverin:
-        mpi: cray-mpich@8.1.32 +rocm 
+        mpi: mpich +rocm amdgpu_target=gfx942 netmod=ofi ~fortran +slurm pmi=pmi2
         specs:
         - libfabric       @2.3.1 fabrics=cxi,rxm,tcp,rxd,udp +rocm amdgpu_target=gfx90a,gfx942
         - cassini-headers @git.release/shs-13.0=main
@@ -55,20 +61,19 @@ ${ENVNAME}:
     # ---------------
     mpi=ompi:
       cluster=eiger:
-        mpi: openmpi@git.v5.0.x=main
-        specs: ['libfabric@2.3.1']
+        mpi: openmpi@git.v5.0.10 ~cuda fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
+        specs:
+        - libfabric       @main fabrics=cxi,rxm,tcp,shm,xpmem
+        - cassini-headers @git.release/shs-13.0=main
+        - cxi-driver      @git.release/shs-13.0=main
+        - libcxi          @git.release/shs-13.0=main
       cluster=else:
-        mpi: openmpi@5.0.9 +cuda fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
+        mpi: openmpi@5.0.8 +cuda fabrics=cma,ofi,xpmem schedulers=slurm +internal-pmix +cray-xpmem
         specs: 
         - libfabric       @main +gdrcopy fabrics=lnx,cxi,rxm,tcp,shm,xpmem
-        - cassini-headers @git.4d2c6845ae99f70ebc4b96e6a82b20989cc6bfaf=main
-        - cxi-driver      @git.8d67e95460729230d2a64fe65c55c59c2baf9b63=main
-        - libcxi          @git.96ebbf59b2f74b9fb684c242f62b9a02f6527150=main
-
-  packages:
-  - git
-  - perl
-  - libtool
+        - cassini-headers @git.release/shs-13.0=main
+        - cxi-driver      @git.release/shs-13.0=main
+        - libcxi          @git.release/shs-13.0=main
 
   specs:
   # ----------
@@ -86,7 +91,7 @@ ${ENVNAME}:
   # ----------
   # mpi tools
   # ----------
-  - osu-micro-benchmarks ~xccl
+#  - osu-micro-benchmarks ~xccl
 
   # ----------
   # runtime/framework
@@ -140,9 +145,11 @@ ${ENVNAME}:
 
   - arch=mi300:
     # ------------------------------------------
-    # hip @ 6
+    # hip @ 7
     # ------------------------------------------
-    - hip@6.3.3 ^mesa@23.3.6
+    # add GPU-specific packages here, for easier comparison with mc version
+    - hip@6 ^mesa@23.3.6
+    - hdf5+mpi
     - hipcub
     - llvm-amdgpu
     # rocm packages
@@ -154,8 +161,10 @@ ${ENVNAME}:
     - rocminfo
     - rocprim
     - rocprofiler-dev
-    - rocprofiler-register ^glog %cxx=gcc ^gflags %cxx=gcc
-    - rocprofiler-systems@6.3.3 +internal-dyninst
+    - rocprofiler-sdk
+    - rocprof-trace-decoder
+    - rocprofiler-systems +internal-dyninst+internal-boost+trace-decoder
+    - rocprofiler-compute
     - rocrand
     - rocsolver
     - rocsparse
@@ -164,18 +173,21 @@ ${ENVNAME}:
     - roctracer-dev
     - rocm-gdb
     - rocm-debug-agent
+    # - hsa-rocr-dev # TODO(iomaganaris): enable for julia AMD gpu build
     # hip packages
     - hipblas
     - hipblaslt
     - hiprand
-    - hipsparse
+    - hipsparse~shared-libs
     - hipfft
     - hipblas-common
+    # - miopen-hip  # TODO(iomaganaris): enable for julia AMD gpu build
     # networking
     - rccl
     # commits pinned for reproducibility, not bugs; update when updating recipe
-    # - aws-ofi-rccl@git.6dae1b0d588c27689ba6daa32710359ea96de78c=cxi
-    # - rccl-tests@git.6405c76e6826663bbb67bd40aeee8c70aa5d3094=develop %cxx=llvm-amdgpu ^cray-mpich@8.1.32 +rocm %c,cxx,fortran=gcc
+    - aws-ofi-rccl@git.6dae1b0d588c27689ba6daa32710359ea96de78c=cxi
+    - rccl-tests@git.6405c76e6826663bbb67bd40aeee8c70aa5d3094=develop %cxx=llvm-amdgpu ^mpich +rocm netmod=ofi ~fortran +slurm pmi=pmi2
+    #^cray-mpich@8.1.32 +rocm %c,cxx,fortran=gcc
 
     # ------------------------------------------
     # hip @ 7

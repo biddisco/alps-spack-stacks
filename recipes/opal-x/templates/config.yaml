@@ -1,11 +1,18 @@
 name: ${ENVNAME}
-version: 2
+version: 3
 spack:
-  commit: v1.1.0
-  repo: https://github.com/biddisco/spack.git
+  commit: releases/v1.2
+  repo: https://github.com/spack/spack.git
   packages:
-    commit: 1a32c3379c9fa28549c68b7931712d81831304df # misc-fixes
-    repo: https://github.com/biddisco/spack-packages # https://github.com/spack/spack-packages.git
+    repo: https://github.com/biddisco/spack-packages.git 
+    commit: 791301f92e0afa15a3d347890762a4b5a1838dee
+# spack:
+#   commit: v1.1.1
+#   repo: https://github.com/biddisco/spack.git
+#   packages:
+#     commit: misc-fixes
+#     repo: https://github.com/biddisco/spack-packages # https://github.com/spack/spack-packages.git
 store: /user-environment
 description: opal-x tools
 modules: false
+

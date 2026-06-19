@@ -26,20 +26,31 @@ packages:
     buildable: false
 
   openmpi:
+    buildable: true
     # original :             https://github.com/open-mpi/ompi.git
     # continuations branch : https://github.com/biddisco/ompi
     package_attributes:
       git: https://github.com/biddisco/ompi
 
   libfabric:
+    buildable: true
     # original :        https://github.com/ofiwg/libfabric.git
     # latest lnx work : https://github.com/amirshehataornl/libfabric
     package_attributes:
       git: https://github.com/ofiwg/libfabric.git
 
-  h5hut:
-    package_attributes:
-      git: /capstor/scratch/cscs/biddisco/src/h5hut
+  cassini-headers:
+    buildable: true
+
+  cxi-driver:
+    buildable: true
+
+  libcxi:
+    buildable: true
+
+  # h5hut:
+  #   package_attributes:
+  #     git: /capstor/scratch/cscs/biddisco/src/h5hut
       # git: https://gitea.psi.ch/adelmann/H5hut
 
   # ------------------------------------------------------------
