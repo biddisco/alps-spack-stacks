@@ -24,6 +24,12 @@ packages:
         - targets=aarch64
         - ~gold
         - ~cuda
+    kokkos:
+      require:
+        - cuda_arch=90
+    trilinos:
+      require:
+        - cuda_arch=90
 
   arch=ada:
     all:

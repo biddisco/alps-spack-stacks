@@ -139,7 +139,7 @@ cmake                                                       \
     -DPARAVIEW_ENABLE_CATALYST=ON                           \
     -DPARAVIEW_ENABLE_WEB:BOOL=OFF                          \
     -DPARAVIEW_ENABLE_ADIOS2=ON                             \
-    -DPARAVIEW_ENABLE_FIDES:BOOL=ON                         \
+    -DPARAVIEW_ENABLE_FIDES:BOOL=OFF                        \
     -DPARAVIEW_ENABLE_VISITBRIDGE:BOOL=OFF                  \
     -DPARAVIEW_PLUGIN_ENABLE_CDIReader=ON                   \
     -DPARAVIEW_PLUGIN_ENABLE_NetCDFTimeAnnotationPlugin=ON  \
@@ -169,36 +169,51 @@ cmake --build $PARAVIEW_BUILD_DIR -j
 cmake --install $PARAVIEW_BUILD_DIR
 
 # =====================================
-SECTION "Install ParaView Plugin: Gadget Reader"
-PARAVIEW_GADGET_PLUGIN_REPO=$SRC_ROOT/ParaViewGadgetPlugin.git
-PARAVIEW_GADGET_PLUGIN_COMMIT="d9d12bde19454199b733b4e1285be3dcd1ac5595"
+SECTION "Install ParaView Plugin: CSCS plugins"
+CSCS_PLUGINS_REPO=$SRC_ROOT/cscs-plugins.git
+CSCS_PLUGINS_SOURCE=/capstor/store/cscs/cscs/csstaff/biddisco/gitrepos/plugins
 
-
-if [ -d "${PARAVIEW_GADGET_PLUGIN_REPO}/.git" ]; then
-    echo "Gadget plugin source already exists, skipping clone..."
-else
-    mkdir -p $PARAVIEW_GADGET_PLUGIN_REPO
-    pushd $PARAVIEW_GADGET_PLUGIN_REPO
-    git init
-    git remote add origin https://github.com/jfavre/ParaViewGadgetPlugin
-    git fetch --depth 1 origin $PARAVIEW_GADGET_PLUGIN_COMMIT
-    git reset --hard FETCH_HEAD
+if [ -d "${CSCS_PLUGINS_REPO}/.git" ]; then
+    echo "CSCS plugins source already exists, pulling latest..."
+    pushd ${CSCS_PLUGINS_REPO}
+    git pull origin main
     popd
+else
+    git clone ${CSCS_PLUGINS_SOURCE} ${CSCS_PLUGINS_REPO}
 fi
 
+# Always initialize/update submodules. If a previous run failed partway,
+# the directories may be empty and need repopulating.
+pushd ${CSCS_PLUGINS_REPO}
+# GIT_ALLOW_PROTOCOL is needed because pv-splotch points at a local
+# filesystem path, while the other submodules use https.
+GIT_ALLOW_PROTOCOL=file:https git submodule update --init ParaViewGadgetPlugin pv-zoltan pv-meshless pv-splotch
+popd
 
-SECTION "Patch Gadget for VTK::hdf5 workaround"
-# Match the VTK::hdf5 module rename used in the ParaView/VTK source tree.
-sed -i 's/VTK::hdf5\b/VTK::hdf5vtk/g' "${PARAVIEW_GADGET_PLUGIN_REPO}/src/Reader/vtk.module"
+# The ParaView/VTK source tree renames VTK::hdf5 to VTK::hdf5vtk. Patch any
+# plugin vtk.module files that still reference the original module name.
+SECTION "Patch CSCS plugins for VTK::hdf5 rename"
+find "${CSCS_PLUGINS_REPO}" -name vtk.module -print0 | \
+    xargs -0 -r sed -i 's/VTK::hdf5\b/VTK::hdf5vtk/g'
+
+# pv-splotch uses cudaDeviceProp members (clockRate, deviceOverlap) that were
+# removed in newer CUDA toolkits. Remove the obsolete diagnostic output.
+SECTION "Patch pv-splotch for newer CUDA"
+sed -i '/Clock rate:/,/Device will not handle overlaps/d' \
+    "${CSCS_PLUGINS_REPO}/pv-splotch/cuda/cuda_device_query.cu"
 
 cmake                                         \
   -G Ninja                                    \
-  -S $PARAVIEW_GADGET_PLUGIN_REPO             \
-  -B $BUILD_ROOT/ParaViewGadgetPlugin         \
+  -S $CSCS_PLUGINS_REPO                       \
+  -B $BUILD_ROOT/CSCSPlugins                  \
   -DCMAKE_PREFIX_PATH=$PARAVIEW_INSTALL_DIR   \
+  -DCSCS_BUILD_pv_zoltan=ON                   \
+  -DCSCS_BUILD_pv_meshless=ON                 \
+  -DCSCS_BUILD_pv_splotch=ON                  \
+  -DCSCS_BUILD_pv_gadget_reader=ON            \
   --install-prefix=$PARAVIEW_PLUGINS_DIR
-cmake --build $BUILD_ROOT/ParaViewGadgetPlugin -j
-cmake --install $BUILD_ROOT/ParaViewGadgetPlugin
+cmake --build $BUILD_ROOT/CSCSPlugins -j
+cmake --install $BUILD_ROOT/CSCSPlugins
 
 
 # =====================================
@@ -214,16 +229,16 @@ tar --strip-components 1 --file $BUILD_ROOT/nvidia-index.tar.bz2 --directory $PA
 find $PARAVIEW_PLUGINS_DIR/nvidia-index -name "._*" -delete
 
 # =====================================
-# SECTION "install helper scripts"
-# HELPERS_SRC=paraview/helpers
-# if [ -e "$HELPERS_SRC" ]; then
-#     # -L follows symlinks so a symlinked helpers dir in the recipe is copied as a real directory.
-#     cp -rL "$HELPERS_SRC" ${UENV_STORE}/
-# else
-#     echo "WARNING: helper scripts not found at $HELPERS_SRC, skipping copy"
-#     ls -la paraview/ >&2
-# fi
-# 
+SECTION "install helper scripts"
+HELPERS_SRC=${RECIPE_BUILD}/store/meta/recipe/helpers
+if [ -e "$HELPERS_SRC" ]; then
+    # -L follows symlinks so a symlinked helpers dir in the recipe is copied as a real directory.
+    cp -rL "$HELPERS_SRC" ${UENV_STORE}/
+else
+    echo "WARNING: helper scripts not found at $HELPERS_SRC, skipping copy"
+    ls -la ${RECIPE_BUILD}/store/meta/recipe/ >&2
+fi
+
 
 
 # =====================================

@@ -46,6 +46,7 @@ paraview-cuda:
             # note: these are needed for the launch script, but it might change
             - PARAVIEW_INSTALL_DIR: $@mount@/paraview
             - PARAVIEW_PLUGINS_DIR: $@mount@/paraview-plugins
+            - PV_PLUGIN_PATH: "$@mount@/paraview-plugins:$@mount@/paraview-plugins/lib64:$@mount@/paraview-plugins/lib64/paraview/plugins"
             # note: by default use paraview catalyst implementation
             - CATALYST_IMPLEMENTATION_NAME: paraview
             - CATALYST_IMPLEMENTATION_PATHS: $@mount@/paraview/lib64/catalyst
@@ -130,6 +131,9 @@ paraview-cuda:
 
   # climate/weather
   - cdi
+
+  # cscs plugin deps
+  - trilinos +zoltan2 ~python ~amesos ~amesos2 ~anasazi ~aztec ~belos ~epetra ~epetraext ~ifpack ~ifpack2 ~intrepid ~intrepid2 ~isorropia ~ml ~muelu ~nox ~sacado ~shards ~shylu ~stokhos ~stratimikos ~teko ~tempus ~trilinoscouplings ~gtest
 
   # python
   - python
