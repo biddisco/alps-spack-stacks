@@ -1,0 +1,5 @@
+buildcache:
+  mount_specific: true
+  private_key: /capstor/scratch/cscs/biddisco/.keys/.gpg-spack-paraview
+  url: /capstor/scratch/cscs/biddisco/uenv-cache
+

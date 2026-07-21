@@ -1,258 +1,257 @@
 #!/bin/bash
 
-# -------------------------------------
-# we output messages to stdout and also stderr to simplify debugging since logs are usually in
-# separate files and we want to see where errors are happening in the script
-function debug_output() {
-    {
-        echo ""
-        echo "-------------------------------------"
-        echo "-- $1"
-        echo "-------------------------------------"
-    } | tee >(cat >&2)
+set -e
+
+function SECTION() {
+  {
+    echo ""
+    echo "-------------------------------------"
+    echo "-- $1"
+    echo "-------------------------------------"
+  } | tee >(cat >&2)
 }
 
 # =====================================
-debug_output "post install hook"
+SECTION "environment variables"
 mount_path={{ env.mount }}
 echo RUNNING IN $mount_path
 config_path={{ env.config }}
 echo config is in $config_path
 
 # =====================================
-debug_output "environment variables"
+SECTION "environment variables"
 printenv
 
 # =====================================
-debug_output "set vars we need frequently"
-HOME=$(pwd)
-SPACK_CMD="spack -C $config_path --debug"
+SECTION "set vars we need frequently"
+RECIPE_BUILD={{ env.build }}
+RECIPE=${RECIPE_BUILD}/store/meta/recipe
+UENV_STORE={{ env.mount }}
+SPACK_CMD="spack -C {{ env.config }} --debug"
+SPACK_CMD="spack -C {{ env.config }}"
 
 # =====================================
-debug_output "list all spack packages"
-$SPACK_CMD find -flv
-
-# =====================================
-debug_output "source spack environment setup"
+SECTION "source spack environment setup"
 SPACK_ROOT=$( $SPACK_CMD location -r )
+echo "SPACK_ROOT = $SPACK_ROOT"
 source $SPACK_ROOT/share/spack/setup-env.sh
 
 # =====================================
-debug_output "Activate environment we need for building paraview"
-$SPACK_CMD env list
-$SPACK_CMD env activate --sh develop
+SECTION "create build environment from installed dependencies"
 
-# this name must match the one we are using from environments.yaml
-# SPACK_ENV_NAME="${ENVNAME}"
-# echo SPACK_ENV_NAME is ${SPACK_ENV_NAME}
+# SPACK_ENV_NAME must match the name of the stackinator environment.
+SPACK_ENV_NAME="paraview-cuda"
+STACKINATOR_ENV=${RECIPE_BUILD}/env/
 
-# # =====================================
-# debug_output "convert stackinator environment into a package"
-# python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME --add
-# python3 $HOME/store/meta/recipe/scripts/env-to-package.py -f $HOME/store/meta/recipe/environments.yaml -p $SPACK_ENV_NAME
-
-# # =====================================
-# debug_output "create build-env"
-# BUILD_ENV_DEV=$mount_path/buildenv-dev.rc
-# SPEC="$SPACK_ENV_NAME %gcc@12 ^[virtuals=gl] egl"
-# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ env activate --sh
-# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ add $SPEC
-# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ concretize
-# $SPACK_CMD -e $HOME/environments/$SPACK_ENV_NAME/ build-env --dump $BUILD_ENV_DEV "$SPEC"
-
-# # =====================================
-# debug_output "source build-env"
-# source $BUILD_ENV_DEV
+# Use the helper script that builds CMAKE_PREFIX_PATH, PATH, PKG_CONFIG_PATH,
+# CUDA_HOME, CC/CXX/FC, and PYTHONPATH from the exact installed prefixes.
+# This avoids re-concretization and the pitfalls of 'spack env activate'.
+source $RECIPE_BUILD/store/meta/recipe/scripts/setup-spack-build-env.sh -C {{ env.config }} -e ${STACKINATOR_ENV}
 
 # =====================================
-debug_output "checkout paraview/vtk/vtkm branches"
-SRC_ROOT=$mount_path/temp/src
-BUILD_ROOT=$mount_path/temp/build
-SCRATCH=/capstor/scratch/cscs/biddisco
+SECTION "download paraview sources..."
+SRC_ROOT=$UENV_STORE/temp/src
+BUILD_ROOT=$UENV_STORE/temp/build
 
 # setup paths for src/build/install
-PARAVIEW_VERSION_MAIN=6.0
-PARAVIEW_VERSION_FULL=6.0.0
-PARAVIEW_SRC_DIR=$SRC_ROOT/ParaView-v${PARAVIEW_VERSION_FULL}
-PARAVIEW_BINARY_DIR=$BUILD_ROOT/paraview
-PARAVIEW_INSTALL_DIR=$mount_path/ParaView-$PARAVIEW_VERSION_MAIN
-PARAVIEW_PLUGINS_DIR=$mount_path/ParaView-Plugins
+PARAVIEW_VERSION_MAIN=6.1
+PARAVIEW_VERSION_FULL=6.1.1
+PARAVIEW_TAG="v${PARAVIEW_VERSION_FULL}"
+
+PARAVIEW_GIT_URL=https://github.com/biddisco/ParaView.git
+PARAVIEW_TAG=cscs-pv-zoltan-port
+
+PARAVIEW_SRC_DIR=$SRC_ROOT/paraview-src
+PARAVIEW_BUILD_DIR=$BUILD_ROOT/paraview
+PARAVIEW_INSTALL_DIR=$UENV_STORE/paraview
+PARAVIEW_PLUGINS_DIR=$UENV_STORE/paraview-plugins
 
 mkdir -p $SRC_ROOT
 mkdir -p $BUILD_ROOT
 mkdir -p $PARAVIEW_INSTALL_DIR
 mkdir -p $PARAVIEW_PLUGINS_DIR
 
-cd $SRC_ROOT
-# because 6.0.0 tarball does not exist yet - and we can set a custom vtk branch
-CLONE_PARAVIEW=true
-if [[ $CLONE_PARAVIEW == "true" ]]; then
-    # clone paraview
-    debug_output "clone paraview"
-    git clone --depth 1 https://gitlab.kitware.com/paraview/paraview.git $PARAVIEW_SRC_DIR
-    cd $PARAVIEW_SRC_DIR
-    git submodule update --init --recursive --depth 1
-    git fetch --tags
-    # git checkout v${PARAVIEW_VERSION_FULL}
-    git checkout master
-    git submodule update --recursive --depth 1
-
-    # =====================================
-    debug_output "change VTK for h5part fix"
-    cd $PARAVIEW_SRC_DIR/VTK
-    git submodule update --depth 1
-    git remote add github https://github.com/biddisco/VTK.git
-    git fetch github --tags
-    # we need 2 commit from the h5part fix branch
-    git cherry-pick github/fix-h5part-parallel-PV~
-    git cherry-pick github/fix-h5part-parallel-PV
+if [ -d "${PARAVIEW_SRC_DIR}/.git" ]; then
+    echo "ParaView source already exists, skipping clone and submodule update..."
 else
-    wget https://www.paraview.org/files/v${PARAVIEW_VERSION_MAIN}/ParaView-v${PARAVIEW_VERSION_FULL}.tar.xz
-    # cp $SCRATCH/uenv-data/ParaView-v${PARAVIEW_VERSION_FULL}.tar.xz .
-    tar --directory $SRC_ROOT -xf ParaView-v${PARAVIEW_VERSION_FULL}.tar.xz
+    git clone --branch ${PARAVIEW_TAG} --depth 1 ${PARAVIEW_GIT_URL} ${PARAVIEW_SRC_DIR}
+    pushd ${PARAVIEW_SRC_DIR}
+    # Fetch the annotated tag object so that git describe / version detection works
+    # in the shallow clone.
+#    git fetch --depth 1 origin tag ${PARAVIEW_TAG}
+    git submodule update --init --recursive
+    popd
 fi
 
-# =====================================
-debug_output "download + extract nvidia index libs"
-cd $PARAVIEW_PLUGINS_DIR
-#NVINDEX_FILENAME=nvidia-index-libs-5.12.0.20231121-linux
-#NVINDEX_FILENAME=nvidia-index-libs-6.0.0.20250409-linux-aarch64
-NVINDEX_FILENAME=nvidia-index-libs-6.0.0.20250604-linux-aarch64
-NVINDEX_TARBALL=${NVINDEX_FILENAME}.tar.bz2
-# curl -L "https://jfrog.svc.cscs.ch/artifactory/paraview/$NVINDEX_TARBALL" -o $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
-wget -q https://www.paraview.org/files/dependencies/$NVINDEX_TARBALL
-tar --directory $PARAVIEW_PLUGINS_DIR -xf $PARAVIEW_PLUGINS_DIR/$NVINDEX_TARBALL
+# NOTE: a proper fix has been merged in master but it is not part of v6.1.0
+# VTK's internal HDF5 module target conflicts with external HDF5. Rename it to
+# VTK::hdf5vtk. Use a word boundary so already-renamed names are not re-renamed.
+echo "Patching VTK::hdf5 CMake target problem..."
+pushd $PARAVIEW_SRC_DIR
+# In case a previous run double-renamed VTK::hdf5vtk to VTK::hdf5vtkvtk,
+# normalize it back to VTK::hdf5vtk first.
+git grep -lr --recurse-submodules "VTK::hdf5vtkvtk" 2>/dev/null | xargs -r sed -i 's/VTK::hdf5vtkvtk/VTK::hdf5vtk/g'
+# Now rename any remaining VTK::hdf5 to VTK::hdf5vtk.
+git grep -lr --recurse-submodules "VTK::hdf5\b" 2>/dev/null | xargs -r sed -i 's/VTK::hdf5\b/VTK::hdf5vtk/g'
+popd
+
+# NOTE: https://gitlab.kitware.com/vtk/vtk/-/work_items/19940
+echo "Patching VTK with external Viskores CMake targets problem..."
+# --forward makes patch a no-op if the change is already applied.
+patch -N -p 1 -d $PARAVIEW_SRC_DIR/VTK <<-'EOF' || true
+  diff --git a/ThirdParty/viskores/CMakeLists.txt b/ThirdParty/viskores/CMakeLists.txt
+  index 468932c21a..917aef03bf 100644
+  --- a/ThirdParty/viskores/CMakeLists.txt
+  +++ b/ThirdParty/viskores/CMakeLists.txt
+  @@ -30,4 +30,11 @@ vtk_module_third_party(
+
+   if(VTK_MODULE_USE_EXTERNAL_vtkviskores)
+     viskores_setup_job_pool()
+  +
+  +  get_property(
+  +    _targets_list
+  +    DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}
+  +    PROPERTY IMPORTED_TARGETS)
+  +
+  +  set_target_properties(${_targets_list} PROPERTIES IMPORTED_GLOBAL TRUE)
+    endif()
+EOF
 
 # =====================================
-debug_output "run cmake on paraview"
-mkdir -p $PARAVIEW_BINARY_DIR && cd $PARAVIEW_BINARY_DIR
+SECTION "configure paraview build..."
 
-cmake -G Ninja \
-    -DCMAKE_INSTALL_PREFIX=$PARAVIEW_INSTALL_DIR            \
+
+cmake                                                       \
     -DCMAKE_BUILD_TYPE=Release                              \
     -DPARAVIEW_BUILD_EDITION=CANONICAL                      \
-    -DPARAVIEW_USE_QT=OFF                                   \
-    -DPARAVIEW_INSTALL_DEVELOPMENT_FILES=ON                 \
-    -DPARAVIEW_USE_MPI=ON                                   \
-    -DVTK_USE_X=OFF                                         \
-    -DVTK_OPENGL_HAS_EGL=ON                                 \
-    -DPARAVIEW_USE_PYTHON=ON                                \
-    -DPARAVIEW_ENABLE_CATALYST=ON                           \
     -DPARAVIEW_BUILD_TESTING=OFF                            \
-    -DPARAVIEW_ENABLE_WEB:BOOL=OFF                          \
-    `# Multithreading options`                              \
-    -DVTK_SMP_IMPLEMENTATION_TYPE=TBB                       \
-    `# CUDA related options`                                \
+    -DPARAVIEW_BUILD_WITH_EXTERNAL=ON                       \
+    -DPARAVIEW_INSTALL_DEVELOPMENT_FILES=ON                 \
+    -DPARAVIEW_RELOCATABLE_INSTALL=OFF                      \
+    -DPARAVIEW_VERSIONED_INSTALL=OFF                        \
     -DPARAVIEW_USE_CUDA=ON                                  \
-    -DCMAKE_CUDA_ARCHITECTURES=90                           \
-    `# VTM-m`                                               \
+    -DCMAKE_CUDA_ARCHITECTURES=90a                          \
+    -DPARAVIEW_USE_MPI=ON                                   \
+    -DPARAVIEW_USE_PYTHON=ON                                \
+    -DPARAVIEW_USE_QT=OFF                                   \
     -DPARAVIEW_USE_VISKORES=ON                              \
-    `# NVidia index`                                        \
-    -DPARAVIEW_PLUGIN_ENABLE_pvNVIDIAIndeX=ON               \
-    -DPARAVIEW_PLUGIN_AUTOLOAD_pvNVIDIAIndeX=OFF            \
-    `# Plugin related options`                              \
+    -DPARAVIEW_ENABLE_RAYTRACING:BOOL=ON                    \
+    -DPARAVIEW_ENABLE_CATALYST=ON                           \
+    -DPARAVIEW_ENABLE_WEB:BOOL=OFF                          \
     -DPARAVIEW_ENABLE_ADIOS2=ON                             \
+    -DPARAVIEW_ENABLE_FIDES:BOOL=ON                         \
+    -DPARAVIEW_ENABLE_VISITBRIDGE:BOOL=OFF                  \
     -DPARAVIEW_PLUGIN_ENABLE_CDIReader=ON                   \
     -DPARAVIEW_PLUGIN_ENABLE_NetCDFTimeAnnotationPlugin=ON  \
-    -DPARAVIEW_ENABLE_FIDES:BOOL=ON                         \
-    -DPARAVIEW_ENABLE_VISITBRIDGE:BOOL=ON                   \
-    -DVISIT_BUILD_READER_Silo=ON                            \
-    `# use external libraries wherever possible`            \
-    -DPARAVIEW_BUILD_WITH_EXTERNAL=ON                       \
-    `# These externals had compilation problems`            \
+    -DPARAVIEW_PLUGIN_ENABLE_pvNVIDIAIndeX=ON               \
+    -DPARAVIEW_PLUGIN_AUTOLOAD_pvNVIDIAIndeX=OFF            \
+    -DPARAVIEW_PLUGIN_ENABLE_pvGadgetReader=ON              \
+    -DVTK_USE_X=OFF                                         \
+    -DVTK_USE_Wayland=OFF                                   \
+    -DVTK_OPENGL_HAS_EGL=ON                                 \
+    -DVTK_SMP_IMPLEMENTATION_TYPE=TBB                       \
+    -DVTK_MODULE_USE_EXTERNAL_VTK_hdf5=ON                   \
+    -DVTK_MODULE_USE_EXTERNAL_VTK_scn=OFF                   \
     -DVTK_MODULE_USE_EXTERNAL_VTK_fast_float=OFF            \
     -DVTK_MODULE_USE_EXTERNAL_VTK_token=OFF                 \
     -DVTK_MODULE_USE_EXTERNAL_VTK_exprtk=OFF                \
-    -DVTK_MODULE_USE_EXTERNAL_VTK_verdict=OFF               \
-    -DVTK_MODULE_USE_EXTERNAL_VTK_libharu=OFF               \
-    -DVTK_MODULE_USE_EXTERNAL_VTK_cli11=OFF                 \
-    -DVTK_MODULE_USE_EXTERNAL_VTK_cgns=OFF                  \
     -DVTK_MODULE_USE_EXTERNAL_VTK_pegtl=OFF                 \
-    -DVTK_MODULE_USE_EXTERNAL_VTK_ioss=OFF                  \
     -DVTK_MODULE_USE_EXTERNAL_VTK_vtkviskores=OFF           \
-    -DVTK_MODULE_USE_EXTERNAL_VTK_scn=OFF                   \
-    `# raytracing `                                         \
-    -DPARAVIEW_ENABLE_RAYTRACING:BOOL=ON                    \
     -DVTKOSPRAY_ENABLE_DENOISER:BOOL=ON                     \
-    $PARAVIEW_SRC_DIR/
+    -S $PARAVIEW_SRC_DIR                                    \
+    -B $PARAVIEW_BUILD_DIR                                  \
+    --install-prefix $PARAVIEW_INSTALL_DIR                  \
+    -G Ninja
 
 # =====================================
-debug_output "build and install paraview"
-ninja
-ninja install
-ninja clean
+SECTION "build and install paraview"
+cmake --build $PARAVIEW_BUILD_DIR -j
+cmake --install $PARAVIEW_BUILD_DIR
 
 # =====================================
-debug_output "build gadget plugin"
-git clone https://github.com/jfavre/ParaViewGadgetPlugin $SRC_ROOT/ParaViewGadgetPlugin
-mkdir $BUILD_ROOT/ParaViewGadgetPlugin
-cd    $BUILD_ROOT/ParaViewGadgetPlugin
+SECTION "Install ParaView Plugin: Gadget Reader"
+PARAVIEW_GADGET_PLUGIN_REPO=$SRC_ROOT/ParaViewGadgetPlugin.git
+PARAVIEW_GADGET_PLUGIN_COMMIT="d9d12bde19454199b733b4e1285be3dcd1ac5595"
 
-cmake -G Ninja \
-    -DCMAKE_PREFIX_PATH=$PARAVIEW_INSTALL_DIR \
-    -DCMAKE_INSTALL_PREFIX=$PARAVIEW_PLUGINS_DIR \
-    $SRC_ROOT/ParaViewGadgetPlugin
-ninja
-ninja install
-ninja clean
 
-# # =====================================
-# debug_output "cleanup user build environemnt"
-# # make a copy of the dev build-env and remove the /dev/shm version
-# BUILD_ENV=$PARAVIEW_INSTALL_DIR/buildenv.rc
-# cp $BUILD_ENV_DEV $BUILD_ENV
-# rm $BUILD_ENV_DEV
-# # add paraview path to build env
-# sed -i "s|^CMAKE_PREFIX_PATH=|CMAKE_PREFIX_PATH=$PARAVIEW_INSTALL_DIR:|g" $BUILD_ENV
+if [ -d "${PARAVIEW_GADGET_PLUGIN_REPO}/.git" ]; then
+    echo "Gadget plugin source already exists, skipping clone..."
+else
+    mkdir -p $PARAVIEW_GADGET_PLUGIN_REPO
+    pushd $PARAVIEW_GADGET_PLUGIN_REPO
+    git init
+    git remote add origin https://github.com/jfavre/ParaViewGadgetPlugin
+    git fetch --depth 1 origin $PARAVIEW_GADGET_PLUGIN_COMMIT
+    git reset --hard FETCH_HEAD
+    popd
+fi
 
-# # remove /dev/shm paths from build-env that will not be available to the final user
-# GCCLOC=$($SPACK_CMD location -i gcc@12%gcc@12)
-# sed -i "s|/dev/shm/biddisco/spack/lib/spack/env/gcc|$GCCLOC/bin|g"  $BUILD_ENV
-# sed -i "s|/dev/shm/biddisco/spack/bin|\$PATH|"                      $BUILD_ENV
 
-# sed -i "/^HOME=/d"                                                  $BUILD_ENV
-# sed -i "/^SPACK_ROOT=/d"                                            $BUILD_ENV
-# sed -i "/^SPACK_SYSTEM_CONFIG_PATH=/d"                              $BUILD_ENV
-# sed -i "/^SPACK_USER_CACHE_PATH=/d"                                 $BUILD_ENV
+SECTION "Patch Gadget for VTK::hdf5 workaround"
+# Match the VTK::hdf5 module rename used in the ParaView/VTK source tree.
+sed -i 's/VTK::hdf5\b/VTK::hdf5vtk/g' "${PARAVIEW_GADGET_PLUGIN_REPO}/src/Reader/vtk.module"
 
-# =====================================
-debug_output "set permissions"
-# chmod -R a+r $BUILD_ENV
-chmod -R a+r $SRC_ROOT
-chmod -R a+r $BUILD_ROOT
-chmod -R a+r $PARAVIEW_INSTALL_DIR
-chmod -R a+r $PARAVIEW_PLUGINS_DIR
+cmake                                         \
+  -G Ninja                                    \
+  -S $PARAVIEW_GADGET_PLUGIN_REPO             \
+  -B $BUILD_ROOT/ParaViewGadgetPlugin         \
+  -DCMAKE_PREFIX_PATH=$PARAVIEW_INSTALL_DIR   \
+  --install-prefix=$PARAVIEW_PLUGINS_DIR
+cmake --build $BUILD_ROOT/ParaViewGadgetPlugin -j
+cmake --install $BUILD_ROOT/ParaViewGadgetPlugin
+
 
 # =====================================
-debug_output "download nvindex license file"
-curl -L "https://jfrog.svc.cscs.ch/artifactory/paraview/nvindex_config.xml" -o $PARAVIEW_PLUGINS_DIR/nvindex_config.xml
+SECTION "Install ParaView Plugin: NVIDIA IndeX"
+
+mkdir -p $PARAVIEW_PLUGINS_DIR/nvidia-index
+
+NVINDEX_FILENAME=nvidia-index-libs-6.0.0.20250604-linux-aarch64.tar.bz2
+wget https://www.paraview.org/files/dependencies/$NVINDEX_FILENAME -O $BUILD_ROOT/nvidia-index.tar.bz2
+tar --strip-components 1 --file $BUILD_ROOT/nvidia-index.tar.bz2 --directory $PARAVIEW_PLUGINS_DIR/nvidia-index --extract
+
+# clean up extended attributes not supported on linux (not needed, just cleanup)
+find $PARAVIEW_PLUGINS_DIR/nvidia-index -name "._*" -delete
 
 # =====================================
-# this runs during post install so we use $HOME to refer to /dev/shm mount
-debug_output "generate paraview proto-launch script for remote connection"
+# SECTION "install helper scripts"
+# HELPERS_SRC=paraview/helpers
+# if [ -e "$HELPERS_SRC" ]; then
+#     # -L follows symlinks so a symlinked helpers dir in the recipe is copied as a real directory.
+#     cp -rL "$HELPERS_SRC" ${UENV_STORE}/
+# else
+#     echo "WARNING: helper scripts not found at $HELPERS_SRC, skipping copy"
+#     ls -la paraview/ >&2
+# fi
+# 
+
+
+# =====================================
+# this runs during post install, paths are relative to the sandbox mount
+SECTION "generate paraview proto-launch script for remote connection"
 cmake \
-    -DINPUT_FILE_NAME="${HOME}/store/meta/recipe/scripts/rc-submit-pvserver.sh.cmake" \
+    -DINPUT_FILE_NAME="${RECIPE_BUILD}/store/meta/recipe/scripts/rc-submit-pvserver.sh.cmake" \
     -DOUTPUT_FILE_NAME="${PARAVIEW_INSTALL_DIR}/rc-submit-pvserver.sh"                \
     -DPARAVIEW_VERSION=${PARAVIEW_VERSION_MAIN}                       \
     -DPARAVIEW_INSTALL_DIR=${PARAVIEW_INSTALL_DIR}                    \
     -DPARAVIEW_PLUGINS_DIR=${PARAVIEW_PLUGINS_DIR}                    \
-    -DPV_LIBRARY_PATH=${PARAVIEW_PLUGINS_DIR}/${NVINDEX_FILENAME}/lib \
+    -DPV_LIBRARY_PATH=${PARAVIEW_PLUGINS_DIR}/nvidia-index/lib \
     -DUENV_IMAGE="@UENV_IMAGE@"                                       \
-    -P ${HOME}/store/meta/recipe/scripts/cmake-copy-substitute-vars.cmake
+    -P ${RECIPE_BUILD}/store/meta/recipe/scripts/cmake-copy-substitute-vars.cmake
 
 # =====================================
-# this runs during post install so we use $HOME to refer to /dev/shm mount
-debug_output "Copy and substitute vars in gpu wrapper launch script helper"
+# this runs during post install, paths are relative to the sandbox mount
+SECTION "Copy and substitute vars in gpu wrapper launch script helper"
 cmake \
-    -DINPUT_FILE_NAME="${HOME}/store/meta/recipe/scripts/gpu_wrapper.sh.cmake" \
+    -DINPUT_FILE_NAME="${RECIPE_BUILD}/store/meta/recipe/scripts/gpu_wrapper.sh.cmake" \
     -DOUTPUT_FILE_NAME="${PARAVIEW_INSTALL_DIR}/gpu_wrapper.sh"                \
-    -DPV_LIBRARY_PATH=${PARAVIEW_PLUGINS_DIR}/${NVINDEX_FILENAME}/lib \
-    -P ${HOME}/store/meta/recipe/scripts/cmake-copy-substitute-vars.cmake
+    -DPV_LIBRARY_PATH=${PARAVIEW_PLUGINS_DIR}/nvidia-index/lib \
+    -P ${RECIPE_BUILD}/store/meta/recipe/scripts/cmake-copy-substitute-vars.cmake
 
 # =====================================
-# this runs during postin install, but writes a new script that is run
+# this runs during post install, but writes a new script that is run
 # after the user has mounted the uenv, so here $HOME refers to the user's home
-debug_output "generate final user-init script to finalize paraview launch script for remote connection"
+SECTION "generate final user-init script to finalize paraview launch script for remote connection"
 
 cat <<EOF > $mount_path/init.sh
 #!/bin/bash
@@ -271,10 +270,13 @@ cmake \
     -DINPUT_FILE_NAME="${PARAVIEW_INSTALL_DIR}/rc-submit-pvserver.sh"    \
     -DOUTPUT_FILE_NAME="\${PVSERVER_LAUNCH_SCRIPT}"                       \
     -DUENV_IMAGE="\${UENV_MOUNT_FILE}"                                    \
-    -P ${mount_path}/meta/recipe/scripts/cmake-copy-substitute-vars.cmake
+    -P ${RECIPE_BUILD}/store/meta/recipe/scripts/cmake-copy-substitute-vars.cmake
 
 EOF
 chmod +x $mount_path/init.sh
 
+SECTION "cleanup"
+rm -rf ${UENV_STORE}/temp
+
 # =====================================
-debug_output "Done"
+SECTION "Done"

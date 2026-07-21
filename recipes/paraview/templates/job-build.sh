@@ -29,7 +29,7 @@ CLUSTER=${CLUSTER}
 IMAGE=${RECIPE}
 ARCH=${ARCH}
 VARIANT=${VARIANT}
-VERSION=6.0.1
+VERSION=6.1.1
 SPACK_ENV_NAME="${IMAGE}-${ARCH}-${VARIANT}-${VERSION}"
 SRC=$HOME/src
 STACKI_DIR=$SRC/alps-vcluster/stackinator
@@ -47,7 +47,7 @@ mkdir -p ${BUILD_DIR}/tmp
 
 # -----------------------------------------"
 debug_output "Execute stackinator"
-$STACKI_DIR/bin/stack-config -s $SYSTEM_DIR -b ${BUILD_DIR} -r $RECIPE_DIR -c ~/cache-config.yaml --debug --develop
+$STACKI_DIR/bin/stack-config -s $SYSTEM_DIR -b ${BUILD_DIR} -r $RECIPE_DIR --debug --develop --mirror $RECIPE_DIR/mirrors.yaml
 
 # -----------------------------------------"
 debug_output "cd $BUILD_DIR"
